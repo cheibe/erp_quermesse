@@ -11,12 +11,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY', default='')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', default='')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = int(os.getenv('DJANGO_DEBUG', default=0))
 
-ALLOWED_HOSTS: list[str] = []
+ALLOWED_HOSTS = str(os.getenv('DJANGO_ALLOWED_HOSTS', default='')).split(',')
 
 
 # Application definition
@@ -69,8 +69,8 @@ WSGI_APPLICATION = 'erp_quermesse.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv('ENGINE', default=''),
-        'NAME': os.getenv('NAME', default=''),
+        'ENGINE': os.getenv('DJANGO_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.getenv('DJANGO_NAME', str(BASE_DIR / 'db.sqlite3')),
     }
 }
 
