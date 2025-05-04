@@ -1,3 +1,86 @@
 from django.db import models
+from django.contrib.auth.models import User, AbstractUser
+from django.conf import settings
 
-# Create your models here.
+class QuermesseUserCuston(AbstractUser):
+    profile_picture = models.ImageField(upload_to='profile_picture/', blank=True, null=True)
+
+class Clientes(models.Model):
+    nome = models.CharField(verbose_name='Nome', max_length=40)
+    is_cliente = models.BooleanField(blank=True, null=True)
+    is_caixa = models.BooleanField(blank=True, null=True)
+    create_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Criado por', on_delete=models.PROTECT, related_name='cliente_user_create', blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    assign_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Modificado por', on_delete=models.PROTECT, related_name='cliente_user_assign', blank=True, null=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.nome
+
+class ClienteUsuario(models.Model):
+    cliente = models.ForeignKey(Clientes, verbose_name='Clinte', on_delete=models.CASCADE)
+    nome = models.CharField(verbose_name='Nome', max_length=40)
+    create_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Criado por', on_delete=models.PROTECT, related_name='clienteUsuario_user_create', blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    assign_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Modificado por', on_delete=models.PROTECT, related_name='clienteUsuario_user_assign', blank=True, null=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.nome
+
+class Fiado(models.Model):
+    cliente = models.ForeignKey(Clientes, verbose_name='Clientes', on_delete=models.CASCADE)
+    cliente_usuario = models.ForeignKey(ClienteUsuario, verbose_name='Cliente usuario', on_delete=models.CASCADE, blank=True, null=True)
+    valor = models.DecimalField(verbose_name='Valor', decimal_places=2, max_digits=20)
+    datadoc = models.DateField(verbose_name='Data do lançamento')
+    datapago = models.DateField(verbose_name='Data do pagamento', blank=True, null=True)
+    is_pago = models.BooleanField(blank=True, null=True, verbose_name='Pago')
+    descricao = models.CharField(verbose_name='Descrição', blank=True, null=True, max_length=100)
+    create_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Criado por', on_delete=models.PROTECT, related_name='clienteFiado_user_create', blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    assign_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Modificado por', on_delete=models.PROTECT, related_name='clienteFiado_user_assign', blank=True, null=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.cliente.nome
+
+class Produto(models.Model):
+    nome = models.CharField(verbose_name='Nome', max_length=40)
+    valor = models.DecimalField(verbose_name='Valor', decimal_places=2, max_digits=20)
+    descricao = models.CharField(verbose_name='Descrição', blank=True, null=True, max_length=100)
+    create_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Criado por', on_delete=models.PROTECT, related_name='clienteProduto_user_create', blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    assign_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Modificado por', on_delete=models.PROTECT, related_name='clienteProduto_user_assign', blank=True, null=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.nome
+
+class Caixa(models.Model):
+    cliente = models.ForeignKey(Clientes, on_delete=models.CASCADE, verbose_name='Operador')
+    valor = models.DecimalField(verbose_name='Valor total', decimal_places=2, max_digits=20)
+    data = models.DateField(verbose_name='Data de operação')
+    descricao = models.CharField(verbose_name='Descrição', blank=True, null=True, max_length=100)
+    qtd_dinheiro = models.DecimalField(verbose_name='Valor em Dinheiro', decimal_places=2, max_digits=20)
+    qtd_cd = models.DecimalField(verbose_name='Valor em cartão de débito', decimal_places=2, max_digits=20)
+    qtd_cc = models.DecimalField(verbose_name='Valor em cartão de crédito', decimal_places=2, max_digits=20)
+    pix = models.DecimalField(verbose_name='Pix', decimal_places=2, max_digits=20)
+    produtos = models.ManyToManyField(Produto, through='ItemCaixa', related_name='caixas')
+    create_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Criado por', on_delete=models.PROTECT, related_name='clienteCaixa_user_create', blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    assign_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Modificado por', on_delete=models.PROTECT, related_name='clienteCaixa_user_assign', blank=True, null=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.cliente.nome
+
+class ItemCaixa(models.Model):
+    caixa = models.ForeignKey(Caixa, on_delete=models.CASCADE, verbose_name='Caixa')
+    produtos = models.ForeignKey(Produto, on_delete=models.CASCADE, verbose_name='Produtos')
+    quantidade = models.PositiveIntegerField(verbose_name='Quantidade')
+    
+    class Meta:
+        unique_together = ('caixa', 'produtos')
+
+    def __str__(self):
+        return self.produtos.nome

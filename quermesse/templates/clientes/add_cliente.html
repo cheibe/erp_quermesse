@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% load bootstrap4 %}
+
+{% block conteudo %}
+    <a href="{% url 'clientes' %}" class="btn btn-primary mb-3">
+        <span class="fas fa-arrow-left mr-1"></span>
+        Voltar
+    </a>
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <button type="submit" class="btn btn-primary">
+                    <span class="fas fa-save"></span>
+                    Salvar
+                </button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

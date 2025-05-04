@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load render_table from django_tables2 %}
+
+{% block conteudo %}
+    <a href="{% url "add_fiado" %}" class="btn btn-primary mb-3">
+        <span class="fas fa-plus mr-1"></span>
+        Cadastrar
+    </a>
+    <a href="{% url "clientes" %}" class="btn btn-primary mb-3">
+        <span class="fas fa-list-ul mr-1"></span>
+        Clientes
+    </a>
+    <form method="get" class="card mb-4">
+        <div class="card-body">
+        <div class="form-row justify-content-start align-items-end">
+            <div class="form-group col-auto mx-2 mb-3">
+            {{ form.cliente.label_tag }}
+            {{ form.cliente }}
+            </div>
+            <div class="form-group col-auto ml-auto">
+            {{ form.datadoc.label_tag }}
+            {{ form.datadoc }}
+            </div>
+            <div class="form-group col-auto ml-auto">
+            {{ form.datapago.label_tag }}
+            {{ form.datapago }}
+            </div>
+            <div class="form-group col-auto ml-auto">
+            <button type="submit" class="btn btn-primary">
+                Filtrar
+            </button>
+            </div>
+            <div class="form-group col-auto ml-auto">
+                <a href="{% url 'fiados' %}" class="btn btn-light">
+                    <span class="fas fa-eraser mr-1"></span>
+                    Limpar filtros
+                </a>
+            </div>
+        </div>
+        </div>
+    </form>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+        <button type="submit" class="btn btn-success">
+            <span class="fas fa-dollar-sign mr-1"></span>
+            Pagar selecionados
+        </button>
+        </div>
+
+        <div class="card">
+        <div class="card-body p-0">
+            {% render_table table %}
+        </div>
+        </div>
+    </form>
+
+    <div class="mt-3 text-right">
+        <h5>
+        Total de Valor: 
+        <span class="badge badge-info">{{ soma_valor|floatformat:2 }}</span>
+        </h5>
+    </div>
+{% endblock conteudo %}
+{% block script %}
+<script>
+    document.getElementById('select-all')
+        .addEventListener('change', function(e) {
+            const checked = e.target.checked;
+            document.querySelectorAll('input.row-select').forEach(function(cb) {
+            cb.checked = checked;
+            });
+        });
+</script>
+{% endblock script %}
