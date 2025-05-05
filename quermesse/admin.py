@@ -20,4 +20,4 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(models.Clientes)
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'is_cliente', 'create_user', 'created', 'assign_user', 'modified')
+    list_display = ('nome', 'is_cliente', 'is_caixa', 'create_user', 'created', 'assign_user', 'modified')

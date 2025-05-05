@@ -49,6 +49,7 @@ def add_cliente(request):
         if form.is_valid():
             novo_cliente = form.save(commit=False)
             novo_cliente.is_cliente = form.cleaned_data.get('is_cliente', True)
+            novo_cliente.is_caixa = form.cleaned_data.get('is_caixa', False)
             novo_cliente.create_user = form.cleaned_data.get('create_user', request.user)
             novo_cliente.assign_user = form.cleaned_data.get('assign_user', request.user)
             novo_cliente.save()
@@ -236,6 +237,7 @@ def add_operador(request):
         if form.is_valid():
             novo_operador = form.save(commit=False)
             novo_operador.is_caixa = form.cleaned_data.get('is_caixa', True)
+            novo_operador.is_cliente = form.cleaned_data.get('is_cliente', False)
             novo_operador.create_user = form.cleaned_data.get('create_user', request.user)
             novo_operador.assign_user = form.cleaned_data.get('assign_user', request.user)
             novo_operador.save()
