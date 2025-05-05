@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load render_table from django_tables2 %}
+
+{% block conteudo %}
+    <a href="" class="btn btn-primary mb-3">
+        <span class="fas fa-arrow-left mr-1"></span>
+        Cadastrar
+    </a>
+    <a href="{% url 'operadores' %}" class="btn btn-primary mb-3">
+        <span class="fas fa-list-ul mr-1"></span>
+        Operadores
+    </a>
+    <a href="{% url 'produtos' %}" class="btn btn-primary mb-3">
+        <span class="fas fa-list-ul mr-1"></span>
+        Produtos
+    </a>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-bordered table-hover">
+                {% comment %} {% render_table table %} {% endcomment %}
+            </table>
+        </div>
+    </div>
+{% endblock conteudo %}

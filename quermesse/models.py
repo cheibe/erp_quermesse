@@ -18,7 +18,7 @@ class Clientes(models.Model):
         return self.nome
 
 class ClienteUsuario(models.Model):
-    cliente = models.ForeignKey(Clientes, verbose_name='Clinte', on_delete=models.CASCADE)
+    cliente = models.ForeignKey(Clientes, verbose_name='Clinte', on_delete=models.PROTECT)
     nome = models.CharField(verbose_name='Nome', max_length=40)
     create_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Criado por', on_delete=models.PROTECT, related_name='clienteUsuario_user_create', blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -29,8 +29,8 @@ class ClienteUsuario(models.Model):
         return self.nome
 
 class Fiado(models.Model):
-    cliente = models.ForeignKey(Clientes, verbose_name='Clientes', on_delete=models.CASCADE)
-    cliente_usuario = models.ForeignKey(ClienteUsuario, verbose_name='Cliente usuario', on_delete=models.CASCADE, blank=True, null=True)
+    cliente = models.ForeignKey(Clientes, verbose_name='Clientes', on_delete=models.PROTECT)
+    cliente_usuario = models.ForeignKey(ClienteUsuario, verbose_name='Cliente usuario', on_delete=models.PROTECT, blank=True, null=True)
     valor = models.DecimalField(verbose_name='Valor', decimal_places=2, max_digits=20)
     datadoc = models.DateField(verbose_name='Data do lançamento')
     datapago = models.DateField(verbose_name='Data do pagamento', blank=True, null=True)
@@ -57,7 +57,7 @@ class Produto(models.Model):
         return self.nome
 
 class Caixa(models.Model):
-    cliente = models.ForeignKey(Clientes, on_delete=models.CASCADE, verbose_name='Operador')
+    cliente = models.ForeignKey(Clientes, on_delete=models.PROTECT, verbose_name='Operador')
     valor = models.DecimalField(verbose_name='Valor total', decimal_places=2, max_digits=20)
     data = models.DateField(verbose_name='Data de operação')
     descricao = models.CharField(verbose_name='Descrição', blank=True, null=True, max_length=100)
@@ -75,8 +75,8 @@ class Caixa(models.Model):
         return self.cliente.nome
 
 class ItemCaixa(models.Model):
-    caixa = models.ForeignKey(Caixa, on_delete=models.CASCADE, verbose_name='Caixa')
-    produtos = models.ForeignKey(Produto, on_delete=models.CASCADE, verbose_name='Produtos')
+    caixa = models.ForeignKey(Caixa, on_delete=models.PROTECT, verbose_name='Caixa')
+    produtos = models.ForeignKey(Produto, on_delete=models.PROTECT, verbose_name='Produtos')
     quantidade = models.PositiveIntegerField(verbose_name='Quantidade')
     
     class Meta:

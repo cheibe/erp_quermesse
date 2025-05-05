@@ -34,7 +34,7 @@ def home(request):
 
 @login_required
 def clientes(request):
-    clientes = models.Clientes.objects.all()
+    clientes = models.Clientes.objects.filter(is_cliente=True).all()
     table = tables.ClientesTable(clientes)
     RequestConfig(request, paginate={"per_page": 15}).configure(table)
     return render(request, 'clientes/clientes.html', {
@@ -220,6 +220,60 @@ def delete_fiado(request, fiado_id):
     return redirect('fiados')
 
 @login_required
+def operadores(request):
+    operadores = models.Clientes.objects.filter(is_caixa=True).all()
+    table = tables.OperadorTable(operadores)
+    RequestConfig(request, paginate={"per_page": 15}).configure(table)
+    return render(request, 'operadores/operadores.html', {
+        'title': 'Operadores',
+        'table': table
+    })
+
+@login_required
+def add_operador(request):
+    if request.method == 'POST':
+        form = forms.OperadoresForm(request, request.POST)
+        if form.is_valid():
+            novo_operador = form.save(commit=False)
+            novo_operador.is_caixa = form.cleaned_data.get('is_caixa', True)
+            novo_operador.create_user = form.cleaned_data.get('create_user', request.user)
+            novo_operador.assign_user = form.cleaned_data.get('assign_user', request.user)
+            novo_operador.save()
+            messages.success(request, f'O operador {novo_operador.nome} foi adicionado com sucesso!')
+            return redirect('operadores')
+    else:
+        form = forms.OperadoresForm(request)
+    return render(request, 'operadores/add_operador.html', {
+        'title': 'Adicionar operador',
+        'form': form
+    })
+
+@login_required
+def edit_operador(request, operador_id):
+    qs_operador = get_object_or_404(models.Clientes, pk=operador_id)
+    if request.method == 'POST':
+        form = forms.OperadoresEditForm(request.POST, instance=qs_operador)
+        if form.is_valid():
+            operador = form.save(commit=False)
+            operador.assign_user = form.cleaned_data.get('assign_user', request.user)
+            operador.save()
+            messages.success(request, f'O operador {operador.nome} foi editado com sucesso!')
+            return redirect('operadores')
+    else:
+        form = forms.OperadoresEditForm(instance=qs_operador)
+    return render(request, 'operadores/add_operador.html', {
+        'title': 'Editar operador',
+        'form': form
+    })
+
+@login_required
+def delete_operador(request, operador_id):
+    operador = get_object_or_404(models.Clientes, pk=operador_id)
+    operador.delete()
+    messages.success(request, 'O operador foi deletado com sucesso!')
+    return redirect('operadores')
+
+@login_required
 def produtos(request):
     produtos = models.Produto.objects.all()
     table = tables.ProdutosTable(produtos)
@@ -270,3 +324,7 @@ def delete_produto(request, produto_id):
     produto.delete()
     messages.success(request, 'O produto foi deletado com sucesso!')
     return redirect('produtos')
+
+@login_required
+def caixas(request):
+    pass

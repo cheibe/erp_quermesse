@@ -72,6 +72,25 @@ class FindFiadoForm(forms.ModelForm):
             'datapago': forms.widgets.DateInput(attrs={'type': 'date'})
         }
 
+class OperadoresForm(forms.ModelForm):
+    class Meta:
+        model = Clientes
+        fields = [
+            'nome',
+            'is_caixa'
+        ]
+
+    def __init__(self, request, *args, **kwargs):
+        super(OperadoresForm, self).__init__(*args, **kwargs)
+        del self.fields['is_caixa']
+
+class OperadoresEditForm(forms.ModelForm):
+    class Meta:
+        model = Clientes
+        fields = [
+            'nome'
+        ]
+
 class ProdutoForm(forms.ModelForm):
     class Meta:
         model = Produto

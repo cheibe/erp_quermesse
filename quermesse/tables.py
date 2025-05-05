@@ -36,6 +36,17 @@ class FiadosTable(tables.Table):
         attrs = {'class': 'table table-bordered table-hover'}
         fields = ('select', 'cliente', 'cliente_usuario', 'valor', 'datadoc', 'is_pago')
 
+class OperadorTable(tables.Table):
+    nome = tables.Column(verbose_name='Nome', orderable=False)
+    is_cliente = tables.BooleanColumn(verbose_name='Cliente', yesno=('Sim', 'Não'), orderable=False)
+    is_caixa = tables.BooleanColumn(verbose_name='Operador', yesno=('Sim', 'Não'), orderable=False)
+    opcoes = tables.TemplateColumn(template_name='operadores/botao_acoes_operadores.html', verbose_name='Opções', orderable=False)
+
+    class Meta:
+        model = models.Clientes
+        attrs = {'class': 'table table-bordered table-hover'}
+        fields = ('nome', 'is_cliente', 'is_caixa')
+
 class ProdutosTable(tables.Table):
     nome = tables.Column(verbose_name='Nome', orderable=False)
     valor = tables.Column(verbose_name='Valor', orderable=False)
