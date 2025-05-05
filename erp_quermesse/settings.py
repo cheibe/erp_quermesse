@@ -67,12 +67,25 @@ WSGI_APPLICATION = 'erp_quermesse.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+#localhost
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('DJANGO_ENGINE', 'django.db.backends.sqlite3'),
         'NAME': os.getenv('DJANGO_NAME', str(BASE_DIR / 'db.sqlite3')),
     }
 }
+
+#mysql
+# DATABASES = {
+#     'default': {
+#         'ENGINE': os.getenv('DJANGO_ENGINE'),
+#         'NAME': os.getenv('DJANGO_NAME'),
+#         'USER': os.getenv('DJANGO_USER'),
+#         'PASSWORD': os.getenv('DJANGO_PASSWORD'),
+#         'HOST': os.getenv('DJANGO_HOST'),
+#         'PORT': os.getenv('DJANGO_PORT'),
+#     }
+# }
 
 
 # Password validation
