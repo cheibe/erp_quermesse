@@ -1,5 +1,5 @@
 from django import forms
-from quermesse.models import Clientes, ClienteUsuario ,Fiado
+from quermesse.models import Clientes, ClienteUsuario, Fiado, Produto
 
 class ClientesForm(forms.ModelForm):
     class Meta:
@@ -71,3 +71,12 @@ class FindFiadoForm(forms.ModelForm):
             'datadoc': forms.widgets.DateInput(attrs={'type': 'date'}),
             'datapago': forms.widgets.DateInput(attrs={'type': 'date'})
         }
+
+class ProdutoForm(forms.ModelForm):
+    class Meta:
+        model = Produto
+        fields = [
+            'nome',
+            'valor',
+            'descricao'
+        ]

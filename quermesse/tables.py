@@ -1,5 +1,5 @@
 import django_tables2 as tables
-from quermesse.models import Clientes, ClienteUsuario ,Fiado
+from quermesse import models
 
 class ClientesTable(tables.Table):
     nome = tables.Column(verbose_name='Nome', orderable=False)
@@ -8,7 +8,7 @@ class ClientesTable(tables.Table):
     opcoes = tables.TemplateColumn(template_name='clientes/botao_acoes_clientes.html', verbose_name='Opções', orderable=False)
 
     class Meta:
-        model = Clientes
+        model = models.Clientes
         attrs = {'class': 'table table-bordered table-hover'}
         fields = ('nome', 'is_cliente', 'is_caixa')
 
@@ -18,7 +18,7 @@ class AutorizadoTable(tables.Table):
     opcoes = tables.TemplateColumn(template_name='autorizados/botao_acoes_autorizados.html', verbose_name='Opções', orderable=False)
 
     class Meta:
-        model = ClienteUsuario
+        model = models.ClienteUsuario
         attrs = {'class': 'table table-bordered table-hover'}
         fields = ('cliente', 'nome')
 
@@ -32,6 +32,15 @@ class FiadosTable(tables.Table):
     opcoes = tables.TemplateColumn(template_name='fiados/botao_acoes_fiados.html', verbose_name='Opções', orderable=False)
 
     class Meta:
-        model = Fiado
+        model = models.Fiado
         attrs = {'class': 'table table-bordered table-hover'}
         fields = ('select', 'cliente', 'cliente_usuario', 'valor', 'datadoc', 'is_pago')
+
+class ProdutosTable(tables.Table):
+    nome = tables.Column(verbose_name='Nome', orderable=False)
+    valor = tables.Column(verbose_name='Valor', orderable=False)
+    opcoes = tables.TemplateColumn(template_name='produtos/botao_acoes_produtos.html', verbose_name='Opções', orderable=False)
+    class Meta:
+        model = models.Produto
+        attrs = {'class': 'table table-bordered table-hover'}
+        fields = ('nome', 'valor')

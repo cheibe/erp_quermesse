@@ -25,4 +25,11 @@ urlpatterns = [
     path('fiados/adicionar', views.add_fiado, name='add_fiado'),
     path('fiados/editar/<fiado_id>', views.edit_fiado, name='edit_fiado'),
     path('fiados/delete/<fiado_id>', views.delete_fiado, name='delete_fiado'),
+
+    path('produtos/', views.produtos, name='produtos'),
+    path('produtos/adicionar', views.add_produto, name='add_produto'),
+    path('produtos/editar/<produto_id>', views.edit_produto, name='edit_produto'),
+    path('produtos/delete/<produto_id>', views.delete_produto, name='delete_produto'),
+
+    
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
