@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load render_table from django_tables2 %}
+
+{% block conteudo %}
+    <a href="{% url 'add_caixa' %}" class="btn btn-primary mb-3">
+        <span class="fas fa-plus mr-1"></span>
+        Cadastrar
+    </a>
+    <a href="{% url 'operadores' %}" class="btn btn-primary mb-3">
+        <span class="fas fa-list-ul mr-1"></span>
+        Operadores
+    </a>
+    <a href="{% url 'produtos' %}" class="btn btn-primary mb-3">
+        <span class="fas fa-list-ul mr-1"></span>
+        Produtos
+    </a>
+    <form method="get" class="card mb-4">
+        <div class="card-body">
+        <div class="form-row justify-content-start align-items-end">
+            <div class="form-group col-auto mx-2 mb-3">
+            {{ form.cliente.label_tag }}
+            {{ form.cliente }}
+            </div>
+            <div class="form-group col-auto ml-auto">
+            {{ form.data.label_tag }}
+            {{ form.data }}
+            </div>
+            <div class="form-group col-auto ml-auto">
+            <button type="submit" class="btn btn-primary">
+                Filtrar
+            </button>
+            </div>
+            <div class="form-group col-auto ml-auto">
+                <a href="{% url 'caixas' %}" class="btn btn-light">
+                    <span class="fas fa-eraser mr-1"></span>
+                    Limpar filtros
+                </a>
+            </div>
+        </div>
+        </div>
+    </form>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-bordered table-hover">
+                {% render_table table %}
+            </table>
+        </div>
+    </div>
+    <div class="form-row justify-content-start align-items-end">
+        <div class="form-group col-auto mx-2 mb-3 mt-3 text-right">
+            <h5>
+            Total de Dinheiro: 
+            <span class="badge badge-info">{{ soma_dinheiro|floatformat:2 }}</span>
+            </h5>
+        </div>
+        <div class="form-group col-auto mx-2 mb-3 mt-3 text-right">
+            <h5>
+            Total de Cartão de débito: 
+            <span class="badge badge-info">{{ soma_cd|floatformat:2 }}</span>
+            </h5>
+        </div>
+        <div class="form-group col-auto mx-2 mb-3 mt-3 text-right">
+            <h5>
+            Total de Cartão de crédito: 
+            <span class="badge badge-info">{{ soma_cc|floatformat:2 }}</span>
+            </h5>
+        </div>
+        <div class="form-group col-auto mx-2 mb-3 mt-3 text-right">
+            <h5>
+            Total de Pix: 
+            <span class="badge badge-info">{{ soma_pix|floatformat:2 }}</span>
+            </h5>
+        </div>
+        <div class="form-group col-auto mx-2 mb-3 mt-3 text-right">
+            <h5>
+            Total de Valor: 
+            <span class="badge badge-danger">{{ soma_valor|floatformat:2 }}</span>
+            </h5>
+        </div>
+    </div>
+{% endblock conteudo %}

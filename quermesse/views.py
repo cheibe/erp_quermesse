@@ -4,12 +4,30 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
+from django.db import transaction
 from django.utils import timezone
 from django_tables2 import RequestConfig
+from django.forms import inlineformset_factory
 from decimal import Decimal
 from quermesse import tables
 from quermesse import models
 from quermesse import forms
+
+ItemCaixaCreatFormSet = inlineformset_factory(
+    models.Caixa,
+    models.ItemCaixa,
+    fields=('produtos','quantidade'),
+    extra=1,
+    can_delete=True
+)
+
+ItemCaixaEditFormSet = inlineformset_factory(
+    models.Caixa,
+    models.ItemCaixa,
+    fields=('produtos','quantidade'),
+    extra=0,
+    can_delete=True
+)
 
 def login(request):
     if request.method == 'POST':
@@ -311,6 +329,7 @@ def edit_produto(request, produto_id):
         if form.is_valid():
             produto = form.save(commit=False)
             produto.assign_user = form.cleaned_data.get('assign_user', request.user)
+            produto.save()
             messages.success(request, f'O produto {produto.nome} foi editado com sucesso!')
             return redirect('produtos')
     else:
@@ -329,4 +348,85 @@ def delete_produto(request, produto_id):
 
 @login_required
 def caixas(request):
-    pass
+    form = forms.CaixaFindForm(request.GET)
+    form.fields['cliente'].required = False
+    form.fields['data'].required = False
+    filter_search = {}
+    if form.is_valid():
+        cliente = form.cleaned_data.get('cliente')
+        data = form.cleaned_data.get('data')
+        if cliente:
+            filter_search['cliente'] = cliente
+        if data:
+            filter_search['data'] = data
+    caixas = models.Caixa.objects.filter(**filter_search)
+    soma_valor = caixas.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
+    soma_dinheiro = caixas.aggregate(total_valor=Sum('qtd_dinheiro'))['total_valor'] or Decimal('0.00')
+    soma_cd = caixas.aggregate(total_valor=Sum('qtd_cd'))['total_valor'] or Decimal('0.00')
+    soma_cc = caixas.aggregate(total_valor=Sum('qtd_cc'))['total_valor'] or Decimal('0.00')
+    soma_pix = caixas.aggregate(total_valor=Sum('pix'))['total_valor'] or Decimal('0.00')
+    table = tables.CaixaTable(caixas)
+    RequestConfig(request, paginate={"per_page": 25}).configure(table)
+    return render(request, 'caixas/caixas.html', {
+        'title': 'Caixas',
+        'form': form,
+        'table': table,
+        'soma_valor': soma_valor,
+        'soma_dinheiro': soma_dinheiro,
+        'soma_cd': soma_cd,
+        'soma_cc': soma_cc,
+        'soma_pix': soma_pix
+    })
+
+@login_required
+def add_caixa(request):
+    if request.method == 'POST':
+        form = forms.CaixaForm(request.POST)
+        formset = ItemCaixaCreatFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            caixa = form.save(commit=False)
+            caixa.create_user = form.cleaned_data.get('create_user', request.user)
+            caixa.assign_user = form.cleaned_data.get('assign_user', request.user)
+            caixa.save()
+            formset.instance = caixa
+            formset.save()
+            messages.success(request, f'O novo registro do caixa foi feito com sucesso!')
+            return redirect('caixas')
+    else:
+        form = forms.CaixaForm()
+        formset = ItemCaixaCreatFormSet()
+    return render(request, 'caixas/add_caixa.html', {
+        'title': 'Adicionar novo registro',
+        'form': form,
+        'formset': formset
+    })
+
+@login_required
+def edit_caixa(request, caixa_id):
+    caixa = get_object_or_404(models.Caixa, pk=caixa_id)
+    if request.method == 'POST':
+        form = forms.CaixaForm(request.POST, instance=caixa)
+        formset = ItemCaixaEditFormSet(request.POST, instance=caixa)
+        if form.is_valid() and formset.is_valid():
+            with transaction.atomic():
+                caixa = form.save(commit=False)
+                caixa.assign_user = request.user
+                caixa.save()
+                formset.save()
+            messages.success(request, 'O registro do caixa foi editado com sucesso!')
+            return redirect('caixas')
+    else:
+        form    = forms.CaixaForm(instance=caixa)
+        formset = ItemCaixaEditFormSet(instance=caixa)
+    return render(request, 'caixas/add_caixa.html', {
+        'title':   'Editar registro do caixa',
+        'form':    form,
+        'formset': formset,
+    })
+
+@login_required
+def delete_caixa(request, caixa_id):
+    qs_caixa = get_object_or_404(models.Caixa, pk=caixa_id)
+    qs_caixa.delete()
+    messages.success(request, 'O registro do caixa foi deletado com sucesso!')
+    return redirect('caixas')

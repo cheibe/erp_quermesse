@@ -37,4 +37,7 @@ urlpatterns = [
     path('operadores/delete/<operador_id>', views.delete_operador, name='delete_operador'),
 
     path('caixas/', views.caixas, name='caixas'),
+    path('caixas/adicionar', views.add_caixa, name='add_caixa'),
+    path('caixas/editar/<caixa_id>', views.edit_caixa, name='edit_caixa'),
+    path('caixas/delete/<caixa_id>', views.delete_caixa, name='delete_caixa'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

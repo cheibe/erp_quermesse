@@ -55,3 +55,17 @@ class ProdutosTable(tables.Table):
         model = models.Produto
         attrs = {'class': 'table table-bordered table-hover'}
         fields = ('nome', 'valor')
+
+class CaixaTable(tables.Table):
+    cliente = tables.Column(verbose_name='Operador', orderable=False)
+    data = tables.Column(verbose_name='Data', orderable=False)
+    qtd_dinheiro = tables.Column(verbose_name='Valor em dinheiro', orderable=False)
+    qtd_cd = tables.Column(verbose_name='Valor cartão de débito', orderable=False)
+    qtd_cc = tables.Column(verbose_name='Valor cartão de crédito', orderable=False)
+    pix = tables.Column(verbose_name='Valor em pix', orderable=False)
+    valor = tables.Column(verbose_name='Valor total', orderable=False)
+    opcoes = tables.TemplateColumn(template_name='caixas/botao_acoes_caixas.html', verbose_name='Opções', orderable=False)
+    class Meta:
+        model = models.Caixa
+        attrs = {'class': 'table table-bordered table-hover'}
+        fields = ('cliente', 'data', 'qtd_dinheiro', 'qtd_cd', 'qtd_cc', 'pix', 'valor')

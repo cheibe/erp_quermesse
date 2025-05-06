@@ -21,3 +21,11 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(models.Clientes)
 class ClienteAdmin(admin.ModelAdmin):
     list_display = ('nome', 'is_cliente', 'is_caixa', 'create_user', 'created', 'assign_user', 'modified')
+
+@admin.register(models.Caixa)
+class CaixaAdmin(admin.ModelAdmin):
+    list_display = ('cliente', 'valor', 'data', 'qtd_dinheiro', 'qtd_cd', 'qtd_cc', 'pix')
+
+@admin.register(models.ItemCaixa)
+class ItemCaixa(admin.ModelAdmin):
+    list_display = ('caixa', 'produtos', 'quantidade')

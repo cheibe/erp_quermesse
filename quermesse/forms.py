@@ -1,5 +1,5 @@
 from django import forms
-from quermesse.models import Clientes, ClienteUsuario, Fiado, Produto
+from quermesse.models import Clientes, ClienteUsuario, Fiado, Produto, Caixa
 
 class ClientesForm(forms.ModelForm):
     class Meta:
@@ -99,3 +99,39 @@ class ProdutoForm(forms.ModelForm):
             'valor',
             'descricao'
         ]
+
+class CaixaForm(forms.ModelForm):
+    class Meta:
+        model = Caixa
+        fields = [
+            'cliente',
+            'valor',
+            'data',
+            'descricao',
+            'qtd_dinheiro',
+            'qtd_cd',
+            'qtd_cc',
+            'pix',
+        ]
+        widgets = {
+            'data': forms.widgets.DateInput(attrs={'type': 'date'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cliente'].queryset = Clientes.objects.filter(is_caixa=True)
+
+class CaixaFindForm(forms.ModelForm):
+    class Meta:
+        model = Caixa
+        fields = [
+            'cliente',
+            'data'
+        ]
+        widgets = {
+            'data': forms.widgets.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cliente'].queryset = Clientes.objects.filter(is_caixa=True)

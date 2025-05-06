@@ -75,8 +75,8 @@ class Caixa(models.Model):
         return self.cliente.nome
 
 class ItemCaixa(models.Model):
-    caixa = models.ForeignKey(Caixa, on_delete=models.PROTECT, verbose_name='Caixa')
-    produtos = models.ForeignKey(Produto, on_delete=models.PROTECT, verbose_name='Produtos')
+    caixa = models.ForeignKey(Caixa, on_delete=models.CASCADE, verbose_name='Caixa')
+    produtos = models.ForeignKey(Produto, on_delete=models.CASCADE, verbose_name='Produtos')
     quantidade = models.PositiveIntegerField(verbose_name='Quantidade')
     
     class Meta:

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+{% block conteudo %}
+    <a href="{% url 'caixas' %}" class="btn btn-primary mb-3">
+        <span class="fas fa-arrow-left mr-1"></span>
+        Voltar
+    </a>
+    <form method="post">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        {{ formset.management_form }}
+        <div class="card mt-3">
+            <div class="card-header">Produtos vendidos</div>
+            <div class="card-body">
+                {% for subform in formset %}
+                    {{ subform.non_field_errors }}
+                    {% for hidden in subform.hidden_fields %}{{ hidden }}{% endfor %}
+                    <div class="form-row align-items-end">
+                        <div class="col">{{ subform.produtos.label_tag }} {{ subform.produtos }}</div>
+                        <div class="col">{{ subform.quantidade.label_tag }} {{ subform.quantidade }}</div>
+                        <div class="col-auto">
+                            {{ subform.DELETE }} <small>Remover</small>
+                        </div>
+                    </div>
+                    <hr>
+                {% endfor %}
+                <button type="button" id="add-item" class="btn btn-sm btn-outline-secondary">+ adicionar produto</button>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Salvar</button>
+    </form>
+    {% block script %}
+        <script>
+        document.getElementById('add-item').onclick = ()=>{
+            let totalForms = document.getElementById('id_itemcaixa_set-TOTAL_FORMS');
+            let newFormIdx = parseInt(totalForms.value);
+            let emptyRow = document.querySelector('.form-row').cloneNode(true);
+            emptyRow.querySelectorAll('input, select').forEach(el=>{
+                el.name = el.name.replace('-0-','-' + newFormIdx + '-');
+                el.id   = el.id.replace('-0-','-' + newFormIdx + '-');
+            if(el.type!=='hidden') el.value = '';
+            });
+            totalForms.value = newFormIdx + 1;
+            document.querySelector('.card-body').appendChild(emptyRow);
+        };
+        </script>
+    {% endblock script %}
+{% endblock %}
