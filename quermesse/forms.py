@@ -72,6 +72,9 @@ class FindFiadoForm(forms.ModelForm):
             'datapago': forms.widgets.DateInput(attrs={'type': 'date'})
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cliente'].queryset = Clientes.objects.filter(is_cliente=True).all()
 class OperadoresForm(forms.ModelForm):
     class Meta:
         model = Clientes
