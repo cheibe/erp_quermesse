@@ -184,7 +184,7 @@ def fiados(request):
             filter_search['datadoc'] = datadoc
         if datapago:
             filter_search['datapago'] = datapago
-    fiados = models.Fiado.objects.filter(**filter_search).order_by('cliente')
+    fiados = models.Fiado.objects.filter(**filter_search).order_by('cliente__nome')
     soma_valor = fiados.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
     table = tables.FiadosTable(fiados)
     RequestConfig(request, paginate={"per_page": 15}).configure(table)
