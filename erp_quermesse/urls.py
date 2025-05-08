@@ -40,4 +40,19 @@ urlpatterns = [
     path('caixas/adicionar', views.add_caixa, name='add_caixa'),
     path('caixas/editar/<caixa_id>', views.edit_caixa, name='edit_caixa'),
     path('caixas/delete/<caixa_id>', views.delete_caixa, name='delete_caixa'),
+
+    path('categoria_entrada/', views.categoria_entrada, name='categoria_entrada'),
+    path('categoria_entrada/adicionar', views.add_categoria_entrada, name='add_categoria_entrada'),
+    path('categoria_entrada/editar/<categoria_entrada_id>', views.edit_categoria_entrada, name='edit_categoria_entrada'),
+    path('categoria_entrada/delete/<categoria_entrada_id>', views.delete_categoria_entrada, name='delete_categoria_entrada'),
+
+    path('categoria_despesa/', views.categoria_despesa, name='categoria_despesa'),
+    path('categoria_despesa/adicionar', views.add_categoria_despesa, name='add_categoria_despesa'),
+    path('categoria_despesa/editar/<categoria_despesa_id>', views.edit_categoria_despesa, name='edit_categoria_despesa'),
+    path('categoria_despesa/delete/<categoria_despesa_id>', views.delete_categoria_despesa, name='delete_categoria_despesa'),
+
+    path('entradas/', views.entradas, name='entradas'),
+    path('entradas/adicionar', views.add_entrada, name='add_entrada'),
+    path('entradas/editar/<entrada_id>', views.edit_entrada, name='edit_entrada'),
+    path('entradas/delete/<entrada_id>', views.delete_entrada, name='delete_entrada'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

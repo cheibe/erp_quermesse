@@ -76,22 +76,60 @@
                         </p>
                     </a>
                 </li>
+                <li class="nav-item has-treeview">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fa fa-money-bill"></i>
+                        <p>
+                            Entradas
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="" class="nav-link">
+                                <i class="fas fa-handshake nav-icon"></i>
+                                <p>Bingo e Leilão</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url "entradas" %}" class="nav-link">
+                                <i class="fas fa-coins nav-icon"></i>
+                                <p>Entradas avulsas</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
                 <li class="nav-item">
-                    <a href="" class="nav-link">
-                        <i class="nav-icon fas fa-credit-card"></i>
+                    <a href="{% url "categoria_despesa" %}" class="nav-link">
+                        <i class="nav-icon fas fa-hand-holding-usd"></i>
                         <p>
                             Pagamentos
                         </p>
                     </a>
                 </li>
-                {% comment %} <li class="nav-item">
-                    <a href="" class="nav-link">
-                        <i class="nav-icon fas fa-hand-holding-usd"></i>
+                <li class="nav-item has-treeview">
+                    <a href="#" class="nav-link">
+                        <i class="nav-icon fa fa-wrench"></i>
                         <p>
-                            Recebimentos
+                            Ferramentas
+                            <i class="right fas fa-angle-left"></i>
                         </p>
                     </a>
-                </li> {% endcomment %}
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="https://www.ilovepdf.com/pt/jpg_para_pdf" class="nav-link" target="_blank" rel="noopener noreferrer">
+                                <i class="fas fa-arrow-right nav-icon"></i>
+                                <p>Transformar em PDF</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="https://www.ilovepdf.com/pt/pdf_para_jpg" class="nav-link" target="_blank" rel="noopener noreferrer">
+                                <i class="fas fa-arrow-right nav-icon"></i>
+                                <p>Transformar em imagem</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
                 <li class="nav-item">
                     <a href="{% url "logout" %}" class="nav-link">
                         <i class="nav-icon fas fa-sign-out-alt"></i>

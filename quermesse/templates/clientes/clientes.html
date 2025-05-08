@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load render_table from django_tables2 %}
+{% load django_tables2 %}
 
 {% block conteudo %}
     <a href="{% url 'fiados' %}" class="btn btn-primary mb-3">
@@ -17,7 +17,7 @@
     <div class="card">
         <div class="card-body">
             <table class="table table-bordered table-hover">
-                {% render_table table %}
+                {% render_table table "django_tables2/bootstrap4.html" %}
             </table>
         </div>
     </div>

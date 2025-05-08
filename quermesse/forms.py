@@ -1,5 +1,5 @@
 from django import forms
-from quermesse.models import Clientes, ClienteUsuario, Fiado, Produto, Caixa
+from quermesse.models import Clientes, ClienteUsuario, Fiado, Produto, Caixa, Categoria, Despesas, Entradas
 
 class ClientesForm(forms.ModelForm):
     class Meta:
@@ -75,6 +75,7 @@ class FindFiadoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['cliente'].queryset = Clientes.objects.filter(is_cliente=True).all()
+
 class OperadoresForm(forms.ModelForm):
     class Meta:
         model = Clientes
@@ -137,4 +138,95 @@ class CaixaFindForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['cliente'].queryset = Clientes.objects.filter(is_caixa=True)
+        self.fields['cliente'].queryset = Clientes.objects.filter(is_caixa=True).all()
+
+class CategoriaForm(forms.ModelForm):
+    class Meta:
+        model = Categoria
+        fields = [
+            'nome',
+            'is_despesa',
+            'is_entrada'
+        ]
+    
+    def __init__(self, request, *args, **kwargs):
+        super(CategoriaForm, self).__init__(*args, **kwargs)
+        if 'is_despesa' in self.fields:
+            del self.fields['is_despesa']
+        if 'is_entrada' in self.fields:
+            del self.fields['is_entrada']
+
+class CategoriaEditForm(forms.ModelForm):
+    class Meta:
+        model = Categoria
+        fields = [
+            'nome'
+        ]
+
+class DespesasForm(forms.ModelForm):
+    class Meta:
+        model = Despesas
+        fields = [
+            'categoria',
+            'valor',
+            'data',
+            'descricao',
+            'doc'
+        ]
+        widgets = {
+            'data': forms.widgets.DateInput(attrs={'type': 'date'}),
+        }
+        helpe_texts = {
+            'doc': 'Tipo de arquivos: .PDF/.JPG/.JPEG/.PNG'
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['categoria'].queryset = Categoria.objects.filter(is_despesa=True).all()
+
+class DespesasFindForm(forms.ModelForm):
+    class Meta:
+        model = Despesas
+        fields = [
+            'categoria',
+            'data'
+        ]
+        widgets = {
+            'data': forms.widgets.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['categoria'].queryset = Categoria.objects.filter(is_despesa=True).all()
+
+class EntradasForm(forms.ModelForm):
+    class Meta:
+        model = Entradas
+        fields = [
+            'categoria',
+            'valor',
+            'data',
+            'descricao'
+        ]
+        widgets = {
+            'data': forms.widgets.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.fields['categoria'].queryset = Categoria.objects.filter(is_entrada=True).all()
+
+class EntradasFindForm(forms.ModelForm):
+    class Meta:
+        model = Despesas
+        fields = [
+            'categoria',
+            'data'
+        ]
+        widgets = {
+            'data': forms.widgets.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['categoria'].queryset = Categoria.objects.filter(is_entrada=True).all()

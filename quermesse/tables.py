@@ -3,14 +3,13 @@ from quermesse import models
 
 class ClientesTable(tables.Table):
     nome = tables.Column(verbose_name='Nome', orderable=False)
-    is_cliente = tables.BooleanColumn(verbose_name='Cliente', yesno=('Sim', 'Não'), orderable=False)
-    is_caixa = tables.BooleanColumn(verbose_name='Operador', yesno=('Sim', 'Não'), orderable=False)
     opcoes = tables.TemplateColumn(template_name='clientes/botao_acoes_clientes.html', verbose_name='Opções', orderable=False)
 
     class Meta:
         model = models.Clientes
+        template_name = "django_tables2/bootstrap4.html"
         attrs = {'class': 'table table-bordered table-hover'}
-        fields = ('nome', 'is_cliente', 'is_caixa')
+        fields = ('nome',)
 
 class AutorizadoTable(tables.Table):
     cliente = tables.Column(verbose_name='Cliente', orderable=False)
@@ -19,6 +18,7 @@ class AutorizadoTable(tables.Table):
 
     class Meta:
         model = models.ClienteUsuario
+        template_name = "django_tables2/bootstrap4.html"
         attrs = {'class': 'table table-bordered table-hover'}
         fields = ('cliente', 'nome')
 
@@ -33,19 +33,19 @@ class FiadosTable(tables.Table):
 
     class Meta:
         model = models.Fiado
+        template_name = "django_tables2/bootstrap4.html"
         attrs = {'class': 'table table-bordered table-hover'}
         fields = ('select', 'cliente', 'cliente_usuario', 'valor', 'datadoc', 'is_pago')
 
 class OperadorTable(tables.Table):
     nome = tables.Column(verbose_name='Nome', orderable=False)
-    is_cliente = tables.BooleanColumn(verbose_name='Cliente', yesno=('Sim', 'Não'), orderable=False)
-    is_caixa = tables.BooleanColumn(verbose_name='Operador', yesno=('Sim', 'Não'), orderable=False)
     opcoes = tables.TemplateColumn(template_name='operadores/botao_acoes_operadores.html', verbose_name='Opções', orderable=False)
 
     class Meta:
         model = models.Clientes
+        template_name = "django_tables2/bootstrap4.html"
         attrs = {'class': 'table table-bordered table-hover'}
-        fields = ('nome', 'is_cliente', 'is_caixa')
+        fields = ('nome',)
 
 class ProdutosTable(tables.Table):
     nome = tables.Column(verbose_name='Nome', orderable=False)
@@ -53,6 +53,7 @@ class ProdutosTable(tables.Table):
     opcoes = tables.TemplateColumn(template_name='produtos/botao_acoes_produtos.html', verbose_name='Opções', orderable=False)
     class Meta:
         model = models.Produto
+        template_name = "django_tables2/bootstrap4.html"
         attrs = {'class': 'table table-bordered table-hover'}
         fields = ('nome', 'valor')
 
@@ -67,5 +68,50 @@ class CaixaTable(tables.Table):
     opcoes = tables.TemplateColumn(template_name='caixas/botao_acoes_caixas.html', verbose_name='Opções', orderable=False)
     class Meta:
         model = models.Caixa
+        template_name = "django_tables2/bootstrap4.html"
         attrs = {'class': 'table table-bordered table-hover'}
         fields = ('cliente', 'data', 'qtd_dinheiro', 'qtd_cd', 'qtd_cc', 'pix', 'valor')
+
+class CategoriaEntradaTable(tables.Table):
+    nome = tables.Column(verbose_name='Categoria', orderable=False)
+    opcoes = tables.TemplateColumn(template_name='categorias/botao_acoes_categoria_entradas.html', verbose_name='Opções', orderable=False)
+
+    class Meta:
+        model = models.Categoria
+        template_name = "django_tables2/bootstrap4.html"
+        attrs = {'class': 'table table-bordered table-hover'}
+        fields = ('nome',)
+
+class CategoriaDespesaTable(tables.Table):
+    nome = tables.Column(verbose_name='Categoria', orderable=False)
+    opcoes = tables.TemplateColumn(template_name='categorias/botao_acoes_categoria_despesas.html', verbose_name='Opções', orderable=False)
+
+    class Meta:
+        model = models.Categoria
+        template_name = "django_tables2/bootstrap4.html"
+        attrs = {'class': 'table table-bordered table-hover'}
+        fields = ('nome',)
+
+class DespesasTable(tables.Table):
+    categoria = tables.Column(verbose_name='Categoria', orderable=False)
+    valor = tables.Column(verbose_name='Valor', orderable=False)
+    data = tables.Column(verbose_name='Data', orderable=False)
+    opcoes = tables.TemplateColumn(template_name='despesas/botao_acoes_despesas.html', verbose_name='Opções', orderable=False)
+
+    class Meta:
+        model = models.Despesas
+        template_name = "django_tables2/bootstrap4.html"
+        attrs = {'class': 'table table-bordered table-hover'}
+        fields = ('categoria', 'valor', 'data')
+
+class EntradasTable(tables.Table):
+    categoria = tables.Column(verbose_name='Categoria', orderable=False)
+    valor = tables.Column(verbose_name='Valor', orderable=False)
+    data = tables.Column(verbose_name='Data', orderable=False)
+    opcoes = tables.TemplateColumn(template_name='entradas/botao_acoes_entradas.html', verbose_name='Opções', orderable=False)
+
+    class Meta:
+        model = models.Entradas
+        template_name = "django_tables2/bootstrap4.html"
+        attrs = {'class': 'table table-bordered table-hover'}
+        fields = ('categoria', 'valor', 'data')

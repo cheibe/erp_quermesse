@@ -430,3 +430,181 @@ def delete_caixa(request, caixa_id):
     qs_caixa.delete()
     messages.success(request, 'O registro do caixa foi deletado com sucesso!')
     return redirect('caixas')
+
+@login_required
+def categoria_entrada(request):
+    categoria_entrada = models.Categoria.objects.filter(is_entrada=True).all()
+    table = tables.CategoriaEntradaTable(categoria_entrada)
+    RequestConfig(request, paginate={"per_page": 15}).configure(table)
+    return render(request, 'categorias/categorias_entradas.html', {
+        'title': 'Categorias',
+        'table': table
+    })
+
+@login_required
+def add_categoria_entrada(request):
+    if request.method == 'POST':
+        form = forms.CategoriaForm(request, request.POST)
+        if form.is_valid():
+            nova_categoria = form.save(commit=False)
+            nova_categoria.is_despesa = False
+            nova_categoria.is_entrada = True
+            nova_categoria.create_user = form.cleaned_data.get('create_user') or request.user
+            nova_categoria.assign_user = form.cleaned_data.get('assign_user') or request.user
+            nova_categoria.save()
+            messages.success(request, f'A categoria {nova_categoria.nome} foi adicionada com sucesso!')
+            return redirect('categoria_entrada')
+    else:
+        form = forms.CategoriaForm(request)
+    return render(request, 'categorias/add_categoria_entrada.html', {
+        'title': 'Adicionar categoria',
+        'form': form
+    })
+
+@login_required
+def edit_categoria_entrada(request, categoria_entrada_id):
+    qs_categoria = get_object_or_404(models.Categoria, pk=categoria_entrada_id)
+    if request.method == 'POST':
+        form = forms.CategoriaEditForm(request.POST, instance=qs_categoria)
+        if form.is_valid():
+            categoria = form.save(commit=False)
+            categoria.assign_user = form.cleaned_data.get('assign_user') or request.user
+            categoria.save()
+            messages.success(request, f'A categoria {categoria.nome} foi editada com sucesso!')
+            return redirect('categoria_entrada')
+    else:
+        form = forms.CategoriaEditForm(instance=qs_categoria)
+    return render(request, 'categorias/add_categoria_entrada.html', {
+        'title': 'Editar categoria',
+        'form': form
+    })
+
+@login_required
+def delete_categoria_entrada(request, categoria_entrada_id):
+    categoria = get_object_or_404(models.Categoria, pk=categoria_entrada_id)
+    categoria.delete()
+    messages.success(request, 'A categoria foi deletada com sucesso!')
+    return redirect('categoria_entrada')
+
+@login_required
+def categoria_despesa(request):
+    categoria_despesa = models.Categoria.objects.filter(is_despesa=True).all()
+    table = tables.CategoriaDespesaTable(categoria_despesa)
+    RequestConfig(request, paginate={"per_page": 15}).configure(table)
+    return render(request, 'categorias/categorias_despesas.html', {
+        'title': 'Categorias',
+        'table': table
+    })
+
+@login_required
+def add_categoria_despesa(request):
+    if request.method == 'POST':
+        form = forms.CategoriaForm(request, request.POST)
+        if form.is_valid():
+            nova_categoria = form.save(commit=False)
+            nova_categoria.is_despesa = True
+            nova_categoria.is_entrada = False
+            nova_categoria.create_user = form.cleaned_data.get('create_user') or request.user
+            nova_categoria.assign_user = form.cleaned_data.get('assign_user') or request.user
+            nova_categoria.save()
+            messages.success(request, f'A categoria {nova_categoria.nome} foi adicionada com sucesso!')
+            return redirect('categoria_despesa')
+    else:
+        form = forms.CategoriaForm(request)
+    return render(request, 'categorias/add_categoria_despesa.html', {
+        'title': 'Adicionar categoria',
+        'form': form
+    })
+
+@login_required
+def edit_categoria_despesa(request, categoria_despesa_id):
+    qs_categoria = get_object_or_404(models.Categoria, pk=categoria_despesa_id)
+    if request.method == 'POST':
+        form = forms.CategoriaEditForm(request.POST, instance=qs_categoria)
+        if form.is_valid():
+            categoria = form.save(commit=False)
+            categoria.assign_user = form.cleaned_data.get('assign_user') or request.user
+            categoria.save()
+            messages.success(request, f'A categoria {categoria.nome} foi editada com sucesso!')
+            return redirect('categoria_despesa')
+    else:
+        form = forms.CategoriaEditForm(instance=qs_categoria)
+    return render(request, 'categorias/add_categoria_despesa.html', {
+        'title': 'Editar categoria',
+        'form': form
+    })
+
+@login_required
+def delete_categoria_despesa(request, categoria_despesa_id):
+    categoria = get_object_or_404(models.Categoria, pk=categoria_despesa_id)
+    categoria.delete()
+    messages.success(request, 'A categoria foi deletada com sucesso!')
+    return redirect('categoria_despesa')
+
+
+@login_required
+def entradas(request):
+    form = forms.EntradasFindForm(request.GET)
+    form.fields['categoria'].required = False
+    form.fields['data'].required = False
+    filter_search = {}
+    if form.is_valid():
+        categoria = form.cleaned_data.get('categoria')
+        data = form.cleaned_data.get('data')
+        if categoria:
+            filter_search['categoria'] = categoria
+        if data:
+            filter_search['data'] = data
+    entradas = models.Entradas.objects.filter(**filter_search).all()
+    soma_valor = entradas.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
+    table = tables.EntradasTable(entradas)
+    RequestConfig(request, paginate={"per_page": 25}).configure(table)
+    return render(request, 'entradas/entradas.html', {
+        'title': 'Entradas',
+        'form': form,
+        'table': table,
+        'soma_valor': soma_valor
+    })
+
+@login_required
+def add_entrada(request):
+    if request.method == 'POST':
+        form = forms.EntradasForm(request.POST)
+        if form.is_valid():
+            nova_entrada = form.save(commit=False)
+            nova_entrada.create_user = form.cleaned_data.get('create_user') or request.user
+            nova_entrada.assign_user = form.cleaned_data.get('assign_user') or request.user
+            nova_entrada.save()
+            messages.success(request, 'O novo registro de entradas foi feito com sucesso!')
+            return redirect('entradas')
+    else:
+        form = forms.EntradasForm()
+    return render(request, 'entradas/add_entrada', {
+        'title': 'Adicionar entrada avulsa',
+        'form': form
+    })
+
+@login_required
+def edit_entrada(request, entrada_id):
+    qs_entrada = get_object_or_404(models.Entradas, pk=entrada_id)
+    if request.method == 'POST':
+        form = forms.EntradasForm(request.POST, instance=qs_entrada)
+        if form.is_valid():
+            entrada = form.save(commit=False)
+            entrada.assign_user = form.cleaned_data.get('assign_user') or request.user
+            entrada.save()
+            messages.success(request, 'O registro de entradas foi editado com sucesso!')
+            return redirect('entradas')
+    else:
+        form = forms.EntradasForm(instance=qs_entrada)
+    return render(request, 'entradas/add_entrada.html', {
+        'title': 'Editar entrada avulsa',
+        'form': form
+    })
+
+@login_required
+def delete_entrada(request, entrada_id):
+    entrada = get_object_or_404(models.Entradas, pk=entrada_id)
+    entrada.delete()
+    messages.success(request, 'O registro da entrada foi deletado com sucesso!')
+    return redirect('entradas')
