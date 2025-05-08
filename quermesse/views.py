@@ -579,7 +579,7 @@ def add_entrada(request):
             return redirect('entradas')
     else:
         form = forms.EntradasForm()
-    return render(request, 'entradas/add_entrada', {
+    return render(request, 'entradas/add_entrada.html', {
         'title': 'Adicionar entrada avulsa',
         'form': form
     })
