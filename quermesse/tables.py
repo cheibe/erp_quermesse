@@ -28,7 +28,11 @@ class FiadosTable(tables.Table):
     cliente_usuario = tables.Column(verbose_name='Autorizado do cliente', orderable=False)
     valor = tables.Column(verbose_name='Valor', orderable=False)
     datadoc = tables.DateColumn(verbose_name='Data do lançamento', orderable=False)
-    is_pago = tables.BooleanColumn(verbose_name='Pago', yesno=('Sim', 'Não'), orderable=False)
+    is_pago = tables.BooleanColumn(verbose_name='Pago', yesno=('Sim', 'Não'), orderable=False, attrs={
+            'td': {
+                'class': lambda record: 'bg-success text-white' if record.is_pago else 'bg-danger text-white'
+            }
+        })
     opcoes = tables.TemplateColumn(template_name='fiados/botao_acoes_fiados.html', verbose_name='Opções', orderable=False)
 
     class Meta:

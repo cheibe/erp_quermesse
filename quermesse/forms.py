@@ -40,6 +40,7 @@ class FiadoForm(forms.ModelForm):
             'cliente_usuario',
             'valor',
             'datadoc',
+            'is_pago',
             'descricao',
         ]
         widgets = {
@@ -48,6 +49,7 @@ class FiadoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        del self.fields['is_pago']
         self.fields['cliente'].queryset = Clientes.objects.filter(is_cliente=True).order_by('nome').all()
         self.fields['cliente_usuario'].queryset = ClienteUsuario.objects.order_by('nome').all()
 
@@ -74,12 +76,18 @@ class FiadoEditForm(forms.ModelForm):
         self.fields['cliente_usuario'].queryset = ClienteUsuario.objects.order_by('nome').all()
 
 class FindFiadoForm(forms.ModelForm):
+    is_pago = forms.NullBooleanField(
+        required=False,
+        widget=forms.NullBooleanSelect(),
+        label='Pago'
+    )
     class Meta:
         model = Fiado
         fields = [
             'cliente',
             'datadoc',
             'datapago',
+            'is_pago'
         ]
         widgets = {
             'datadoc': forms.widgets.DateInput(attrs={'type': 'date'}),
@@ -89,6 +97,11 @@ class FindFiadoForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['cliente'].queryset = Clientes.objects.filter(is_cliente=True).order_by('nome').all()
+        self.fields['is_pago'].widget.choices = [
+            (None, '— todos —'),
+            (True, 'Sim'),
+            (False, 'Não'),
+        ]
 
 class OperadoresForm(forms.ModelForm):
     class Meta:

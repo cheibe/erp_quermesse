@@ -178,12 +178,15 @@ def fiados(request):
         cliente = form.cleaned_data.get('cliente')
         datadoc = form.cleaned_data.get('datadoc')
         datapago = form.cleaned_data.get('datapago')
+        is_pago = form.cleaned_data.get('is_pago')
         if cliente:
             filter_search['cliente'] = cliente
         if datadoc:
             filter_search['datadoc'] = datadoc
         if datapago:
             filter_search['datapago'] = datapago
+        if is_pago is not None:
+            filter_search['is_pago'] = is_pago
     fiados = models.Fiado.objects.filter(**filter_search).order_by('cliente__nome').all()
     soma_valor = fiados.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
     table = tables.FiadosTable(fiados)
@@ -201,6 +204,7 @@ def add_fiado(request):
         form = forms.FiadoForm(request.POST)
         if form.is_valid():
             novo_fiado = form.save(commit=False)
+            novo_fiado.is_pago = False
             novo_fiado.creat_user = form.cleaned_data.get('create_user', request.user)
             novo_fiado.assign_user = form.cleaned_data.get('assign_user', request.user)
             novo_fiado.save()
