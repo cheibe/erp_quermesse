@@ -27,6 +27,10 @@ class AutorizadoForm(forms.ModelForm):
             'cliente',
             'nome'
         ]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cliente'].queryset = Clientes.objects.filter(is_cliente=True).order_by('nome').all()
 
 class FiadoForm(forms.ModelForm):
     class Meta:
@@ -41,6 +45,11 @@ class FiadoForm(forms.ModelForm):
         widgets = {
             'datadoc': forms.widgets.DateInput(attrs={'type': 'date'})
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cliente'].queryset = Clientes.objects.filter(is_cliente=True).order_by('nome').all()
+        self.fields['cliente_usuario'].queryset = ClienteUsuario.objects.order_by('nome').all()
 
 class FiadoEditForm(forms.ModelForm):
     class Meta:
@@ -59,6 +68,11 @@ class FiadoEditForm(forms.ModelForm):
             'datapago': forms.widgets.DateInput(attrs={'type': 'date'})
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cliente'].queryset = Clientes.objects.filter(is_cliente=True).order_by('nome').all()
+        self.fields['cliente_usuario'].queryset = ClienteUsuario.objects.order_by('nome').all()
+
 class FindFiadoForm(forms.ModelForm):
     class Meta:
         model = Fiado
@@ -74,7 +88,7 @@ class FindFiadoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['cliente'].queryset = Clientes.objects.filter(is_cliente=True).all()
+        self.fields['cliente'].queryset = Clientes.objects.filter(is_cliente=True).order_by('nome').all()
 
 class OperadoresForm(forms.ModelForm):
     class Meta:
@@ -123,7 +137,7 @@ class CaixaForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['cliente'].queryset = Clientes.objects.filter(is_caixa=True)
+        self.fields['cliente'].queryset = Clientes.objects.filter(is_caixa=True).order_by('nome').all()
 
 class CaixaFindForm(forms.ModelForm):
     class Meta:
@@ -138,7 +152,7 @@ class CaixaFindForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['cliente'].queryset = Clientes.objects.filter(is_caixa=True).all()
+        self.fields['cliente'].queryset = Clientes.objects.filter(is_caixa=True).order_by('nome').all()
 
 class CategoriaForm(forms.ModelForm):
     class Meta:
@@ -182,7 +196,7 @@ class DespesasForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['categoria'].queryset = Categoria.objects.filter(is_despesa=True).all()
+        self.fields['categoria'].queryset = Categoria.objects.filter(is_despesa=True).order_by('nome').all()
 
 class DespesasFindForm(forms.ModelForm):
     class Meta:
@@ -197,8 +211,7 @@ class DespesasFindForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['categoria'].queryset = Categoria.objects.filter(is_despesa=True).all()
-
+        self.fields['categoria'].queryset = Categoria.objects.filter(is_despesa=True).order_by('nome').all()
 class EntradasForm(forms.ModelForm):
     class Meta:
         model = Entradas
@@ -214,7 +227,7 @@ class EntradasForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.fields['categoria'].queryset = Categoria.objects.filter(is_entrada=True).all()
+            self.fields['categoria'].queryset = Categoria.objects.filter(is_entrada=True).order_by('nome').all()
 
 class EntradasFindForm(forms.ModelForm):
     class Meta:
@@ -229,4 +242,4 @@ class EntradasFindForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['categoria'].queryset = Categoria.objects.filter(is_entrada=True).all()
+        self.fields['categoria'].queryset = Categoria.objects.filter(is_entrada=True).order_by('nome').all()

@@ -52,7 +52,7 @@ def home(request):
 
 @login_required
 def clientes(request):
-    clientes = models.Clientes.objects.filter(is_cliente=True).all()
+    clientes = models.Clientes.objects.filter(is_cliente=True).order_by('nome').all()
     table = tables.ClientesTable(clientes)
     RequestConfig(request, paginate={"per_page": 15}).configure(table)
     return render(request, 'clientes/clientes.html', {
@@ -107,7 +107,7 @@ def delete_cliente(request, cliente_id):
 
 @login_required
 def autorizados(request):
-    autorizados = models.ClienteUsuario.objects.all()
+    autorizados = models.ClienteUsuario.objects.order_by('cliente__nome').all()
     table = tables.AutorizadoTable(autorizados)
     RequestConfig(request, paginate={"per_page": 15}).configure(table)
     return render(request, 'autorizados/autorizados.html', {
@@ -184,7 +184,7 @@ def fiados(request):
             filter_search['datadoc'] = datadoc
         if datapago:
             filter_search['datapago'] = datapago
-    fiados = models.Fiado.objects.filter(**filter_search).order_by('cliente__nome')
+    fiados = models.Fiado.objects.filter(**filter_search).order_by('cliente__nome').all()
     soma_valor = fiados.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
     table = tables.FiadosTable(fiados)
     RequestConfig(request, paginate={"per_page": 15}).configure(table)
@@ -240,7 +240,7 @@ def delete_fiado(request, fiado_id):
 
 @login_required
 def operadores(request):
-    operadores = models.Clientes.objects.filter(is_caixa=True).all()
+    operadores = models.Clientes.objects.filter(is_caixa=True).order_by('nome').all()
     table = tables.OperadorTable(operadores)
     RequestConfig(request, paginate={"per_page": 15}).configure(table)
     return render(request, 'operadores/operadores.html', {
@@ -295,7 +295,7 @@ def delete_operador(request, operador_id):
 
 @login_required
 def produtos(request):
-    produtos = models.Produto.objects.all()
+    produtos = models.Produto.objects.order_by('nome').all()
     table = tables.ProdutosTable(produtos)
     RequestConfig(request, paginate={"per_page": 15}).configure(table)
     return render(request, 'produtos/produtos.html', {
@@ -359,7 +359,7 @@ def caixas(request):
             filter_search['cliente'] = cliente
         if data:
             filter_search['data'] = data
-    caixas = models.Caixa.objects.filter(**filter_search)
+    caixas = models.Caixa.objects.filter(**filter_search).order_by('cliente__nome').all()
     soma_valor = caixas.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
     soma_dinheiro = caixas.aggregate(total_valor=Sum('qtd_dinheiro'))['total_valor'] or Decimal('0.00')
     soma_cd = caixas.aggregate(total_valor=Sum('qtd_cd'))['total_valor'] or Decimal('0.00')
@@ -433,7 +433,7 @@ def delete_caixa(request, caixa_id):
 
 @login_required
 def categoria_entrada(request):
-    categoria_entrada = models.Categoria.objects.filter(is_entrada=True).all()
+    categoria_entrada = models.Categoria.objects.filter(is_entrada=True).order_by('nome').all()
     table = tables.CategoriaEntradaTable(categoria_entrada)
     RequestConfig(request, paginate={"per_page": 15}).configure(table)
     return render(request, 'categorias/categorias_entradas.html', {
@@ -488,7 +488,7 @@ def delete_categoria_entrada(request, categoria_entrada_id):
 
 @login_required
 def categoria_despesa(request):
-    categoria_despesa = models.Categoria.objects.filter(is_despesa=True).all()
+    categoria_despesa = models.Categoria.objects.filter(is_despesa=True).order_by('nome').all()
     table = tables.CategoriaDespesaTable(categoria_despesa)
     RequestConfig(request, paginate={"per_page": 15}).configure(table)
     return render(request, 'categorias/categorias_despesas.html', {
