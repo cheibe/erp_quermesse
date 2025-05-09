@@ -17,7 +17,7 @@ ItemCaixaCreatFormSet = inlineformset_factory(
     models.Caixa,
     models.ItemCaixa,
     fields=('produtos','quantidade'),
-    extra=1,
+    extra=19,
     can_delete=True
 )
 
