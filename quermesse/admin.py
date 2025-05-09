@@ -22,6 +22,18 @@ class UserAdmin(BaseUserAdmin):
 class ClienteAdmin(admin.ModelAdmin):
     list_display = ('nome', 'is_cliente', 'is_caixa', 'create_user', 'created', 'assign_user', 'modified')
 
+@admin.register(models.ClienteUsuario)
+class ClienteUsuarioAdmin(admin.ModelAdmin):
+    list_display = ('cliente', 'nome', 'create_user', 'created', 'assign_user', 'modified')
+
+@admin.register(models.Fiado)
+class FiadoAdmin(admin.ModelAdmin):
+    list_display = ('cliente', 'cliente_usuario', 'valor', 'datadoc', 'datapago', 'is_pago')
+
+@admin.register(models.Produto)
+class ProdutoAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'valor', 'create_user', 'created', 'assign_user', 'modified')
+
 @admin.register(models.Caixa)
 class CaixaAdmin(admin.ModelAdmin):
     list_display = ('cliente', 'valor', 'data', 'qtd_dinheiro', 'qtd_cd', 'qtd_cc', 'pix')
@@ -29,3 +41,15 @@ class CaixaAdmin(admin.ModelAdmin):
 @admin.register(models.ItemCaixa)
 class ItemCaixa(admin.ModelAdmin):
     list_display = ('caixa', 'produtos', 'quantidade')
+
+@admin.register(models.Categoria)
+class CategoriaAdmin(admin.ModelAdmin):
+    list_display = ('nome', 'is_despesa', 'is_entrada', 'create_user', 'created', 'assign_user', 'modified')
+
+@admin.register(models.Despesas)
+class DespesaAdmin(admin.ModelAdmin):
+    list_display = ('categoria', 'valor', 'data', 'create_user', 'created', 'assign_user', 'modified')
+
+@admin.register(models.Entradas)
+class EntradaAdmin(admin.ModelAdmin):
+    list_display = ('categoria', 'valor', 'data', 'create_user', 'created', 'assign_user', 'modified')
