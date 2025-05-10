@@ -100,6 +100,12 @@ class DespesasTable(tables.Table):
     categoria = tables.Column(verbose_name='Categoria', orderable=False)
     valor = tables.Column(verbose_name='Valor', orderable=False)
     data = tables.Column(verbose_name='Data', orderable=False)
+    documento = tables.TemplateColumn(
+        '<a href="{{ record.doc.url }}" target="_blank" rel="noopener noreferrer">'
+        'Ver documento</a>',
+        verbose_name='Documento',
+        orderable=False
+    )
     opcoes = tables.TemplateColumn(template_name='despesas/botao_acoes_despesas.html', verbose_name='Opções', orderable=False)
 
     class Meta:

@@ -55,4 +55,9 @@ urlpatterns = [
     path('entradas/adicionar', views.add_entrada, name='add_entrada'),
     path('entradas/editar/<entrada_id>', views.edit_entrada, name='edit_entrada'),
     path('entradas/delete/<entrada_id>', views.delete_entrada, name='delete_entrada'),
+
+    path('despesas/', views.despesas, name='despesas'),
+    path('despesas/adicionar', views.add_despesa, name='add_despesa'),
+    path('despesas/editar/<despesa_id>', views.edit_despesa, name='edit_despesa'),
+    path('despesas/delete/<despesa_id>', views.delete_despesa, name='delete_despesa'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -197,11 +197,15 @@ class DespesasForm(forms.ModelForm):
             'categoria',
             'valor',
             'data',
+            'is_pago',
+            'datapago',
             'descricao',
             'doc'
         ]
         widgets = {
             'data': forms.widgets.DateInput(attrs={'type': 'date'}),
+            'datapago': forms.widgets.DateInput(attrs={'type': 'date'}),
+            'is_pago': forms.widgets.CheckboxInput()
         }
         helpe_texts = {
             'doc': 'Tipo de arquivos: .PDF/.JPG/.JPEG/.PNG'
@@ -216,15 +220,25 @@ class DespesasFindForm(forms.ModelForm):
         model = Despesas
         fields = [
             'categoria',
-            'data'
+            'data',
+            'datapago',
+            'is_pago',
         ]
         widgets = {
             'data': forms.widgets.DateInput(attrs={'type': 'date'}),
+            'datapago': forms.widgets.DateInput(attrs={'type': 'date'}),
+            'is_pago': forms.widgets.Select()
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['categoria'].queryset = Categoria.objects.filter(is_despesa=True).order_by('nome').all()
+        self.fields['is_pago'].widget.choices = [
+            (None, '- Todos -'),
+            (True, 'Sim'),
+            (False, 'Não'),
+        ]
+
 class EntradasForm(forms.ModelForm):
     class Meta:
         model = Entradas

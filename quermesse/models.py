@@ -19,7 +19,7 @@ class Clientes(models.Model):
         return self.nome
 
 class ClienteUsuario(models.Model):
-    cliente = models.ForeignKey(Clientes, verbose_name='Clinte', on_delete=models.PROTECT)
+    cliente = models.ForeignKey(Clientes, verbose_name='Cliente', on_delete=models.PROTECT)
     nome = models.CharField(verbose_name='Nome', max_length=40)
     create_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Criado por', on_delete=models.PROTECT, related_name='clienteUsuario_user_create', blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -102,6 +102,8 @@ class Despesas(models.Model):
     categoria = models.ForeignKey(Categoria, verbose_name='Categoria', on_delete=models.PROTECT)
     valor = models.DecimalField(verbose_name='Valor', decimal_places=2, max_digits=25)
     data = models.DateField(verbose_name='Data da operação')
+    is_pago = models.BooleanField(verbose_name='Pago', blank=True, default=False)
+    datapago = models.DateField('Data do pagamento', blank=True, null=True)
     descricao = models.CharField(verbose_name='Descrição', max_length=250, blank=True, null=True)
     doc = models.FileField(verbose_name='Nota', upload_to='doc_despesas/', blank=True, null=True, validators=[FileExtensionValidator(allowed_extensions=['pdf', 'jpg', 'jpeg', 'png'])])
     create_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Criado por', on_delete=models.PROTECT, related_name='despesa_user_create', blank=True, null=True)

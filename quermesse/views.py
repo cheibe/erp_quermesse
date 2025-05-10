@@ -612,3 +612,76 @@ def delete_entrada(request, entrada_id):
     entrada.delete()
     messages.success(request, 'O registro da entrada foi deletado com sucesso!')
     return redirect('entradas')
+
+@login_required
+def despesas(request):
+    form = forms.DespesasFindForm(request.GET)
+    form.fields['categoria'].required = False
+    form.fields['data'].required = False
+    filter_search = {}
+    if form.is_valid():
+        categoria = form.cleaned_data.get('categoria')
+        data = form.cleaned_data.get('data')
+        is_pago = form.cleaned_data.get('is_pago')
+        datapago = form.cleaned_data.get('datapago')
+        if categoria:
+            filter_search['categoria'] = categoria
+        if data:
+            filter_search['data'] = data
+        if datapago:
+            filter_search['datapago'] = datapago
+        if is_pago:
+            filter_search['is_pago'] = is_pago
+    despesas = models.Despesas.objects.filter(**filter_search).order_by('categoria__nome').all()
+    soma_valor = despesas.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
+    table = tables.DespesasTable(despesas)
+    RequestConfig(request, paginate={"per_page": 15}).configure(table)
+    return render(request, 'despesas/despesas.html', {
+        'title': 'Despesas',
+        'soma_valor': soma_valor,
+        'table': table,
+        'form': form
+    })
+
+@login_required
+def add_despesa(request):
+    if request.method == 'POST':
+        form = forms.DespesasForm(request.POST, request.FILES)
+        if form.is_valid():
+            nova_despesa = form.save(commit=False)
+            nova_despesa.create_user = form.cleaned_data.get('create_user') or request.user
+            nova_despesa.assign_user = form.cleaned_data.get('assign_user') or request.user
+            nova_despesa.save()
+            messages.success(request, 'O novo registro de despesas foi feito com sucesso!')
+            return redirect('despesas')
+    else:
+        form = forms.DespesasForm()
+    return render(request, 'despesas/add_despesa.html', {
+        'title': 'Adicionar despesa',
+        'form': form
+    })
+
+@login_required
+def edit_despesa(request, despesa_id):
+    qs_despesa = get_object_or_404(models.Despesas, pk=despesa_id)
+    if request.method == 'POST':
+        form = forms.DespesasForm(request.POST, request.FILES, instance=qs_despesa)
+        if form.is_valid():
+            despesa = form.save(commit=False)
+            despesa.assign_user = form.cleaned_data.get('assign_user') or request.user
+            despesa.save()
+            messages.success(request, 'O registro da despesa foi editado com sucesso!')
+            return redirect('despesas')
+    else:
+        form = forms.DespesasForm(instance=qs_despesa)
+    return render(request, 'despesas/add_despesa.html', {
+        'title': 'Editar despesa',
+        'form': form
+    })
+
+@login_required
+def delete_despesa(request, despesa_id):
+    despesa = get_object_or_404(models.Despesas, pk=despesa_id)
+    despesa.delete()
+    messages.success(request, 'O registro de despesa foi excluido com sucesso')
+    return redirect('despesas')
