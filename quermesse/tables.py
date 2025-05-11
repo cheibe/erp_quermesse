@@ -101,8 +101,15 @@ class DespesasTable(tables.Table):
     valor = tables.Column(verbose_name='Valor', orderable=False)
     data = tables.Column(verbose_name='Data', orderable=False)
     documento = tables.TemplateColumn(
-        '<a href="{{ record.doc.url }}" target="_blank" rel="noopener noreferrer">'
-        'Ver documento</a>',
+        template_code='''
+            {% if record.doc.name %}
+                <a href="{{ record.doc.url }}" target="_blank" rel="noopener noreferrer">
+                    Ver
+                </a>
+            {% else %}
+                —
+            {% endif %}
+        ''',
         verbose_name='Documento',
         orderable=False
     )
