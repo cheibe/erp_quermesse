@@ -68,14 +68,6 @@ WSGI_APPLICATION = 'erp_quermesse.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-#localhost
-DATABASES = {
-    'default': {
-        'ENGINE': os.getenv('DJANGO_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': os.getenv('DJANGO_NAME', str(BASE_DIR / 'db.sqlite3')),
-    }
-}
-
 #mysql
 DATABASES = {
     'default': {
@@ -142,3 +134,8 @@ AUTH_USER_MODEL = 'quermesse.QuermesseUserCuston'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+try:
+    from .local_settings import *
+except ImportError:
+    pass
