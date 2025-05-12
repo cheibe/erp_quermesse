@@ -17,7 +17,7 @@ ItemCaixaCreatFormSet = inlineformset_factory(
     models.Caixa,
     models.ItemCaixa,
     fields=('produtos','quantidade'),
-    extra=19,
+    extra=20,
     can_delete=True
 )
 
@@ -46,8 +46,53 @@ def logout(request):
 
 @login_required
 def home(request):
-    return render(request, 'base.html', {
+    qs_produtos = (
+        models.ItemCaixa.objects
+        .values(produto=F('produtos__nome'))
+        .annotate(
+            total_qtd = Sum('quantidade'),
+            total_valor = Sum(
+                F('quantidade') * F('produtos__valor'),
+                output_field=DecimalField(decimal_places=2)
+            )
+        )
+        .order_by('-total_qtd')
+    )
+    qs_operador = (
+        models.Clientes.objects
+                .filter(is_caixa=True)
+                .annotate(total_vendas=Sum("caixa__valor"))
+                .order_by("-total_vendas")
+    )
+    qs_fiado_pago = models.Fiado.objects.filter(is_pago=True)
+    qs_fiado_aberto = models.Fiado.objects.filter(is_pago=False)
+    qs_caixa = models.Caixa.objects.all()
+    qs_entrada = models.Entradas.objects.all()
+    qs_despesa = models.Despesas.objects.all()
+    soma_fiado_pago = qs_fiado_pago.aggregate(total_valor_pago=Sum('valor'))['total_valor_pago'] or Decimal('0.00')
+    soma_fiado_aberto = qs_fiado_aberto.aggregate(total_valor_aberto=Sum('valor'))['total_valor_aberto'] or Decimal('0.00')
+    soma_total_caixa = qs_caixa.aggregate(total_valor_caixa=Sum('valor'))['total_valor_caixa'] or Decimal('0.00')
+    soma_total_entrada = qs_entrada.aggregate(total_valor_entrada=Sum('valor'))['total_valor_entrada'] or Decimal('0.00')
+    soma_total_despesa = qs_despesa.aggregate(total_valor_despesa=Sum('valor'))['total_valor_despesa'] or Decimal('0.00')
+    soma_total_bruto = soma_total_caixa + soma_total_entrada
+    soma_total_liquido = soma_total_bruto - soma_total_despesa
+    soma_total_fiado = soma_fiado_aberto + soma_fiado_pago
+    table_produto = tables.QtdProdutosTable(qs_produtos)
+    table_operador = tables.OperadorTotalTable(qs_operador)
+    RequestConfig(request, paginate={"per_page": 5}).configure(table_produto)
+    RequestConfig(request, paginate={"per_page": 5}).configure(table_operador)
+    return render(request, 'dashboard/dashboard.html', {
         'title': 'Dashboard',
+        'soma_fiado_pago': soma_fiado_pago,
+        'soma_fiado_aberto': soma_fiado_aberto,
+        'soma_total_fiado': soma_total_fiado,
+        'soma_total_caixa': soma_total_caixa,
+        'soma_total_entrada': soma_total_entrada,
+        'soma_total_despesa': soma_total_despesa,
+        'soma_total_bruto': soma_total_bruto,
+        'soma_total_liquido': soma_total_liquido,
+        'table_produto': table_produto,
+        'table_operador': table_operador
     })
 
 @login_required
@@ -364,7 +409,7 @@ def total_produtos(request):
         )
         .order_by('produto')
     )
-    table = tables.QtdProdutos(qs)
+    table = tables.QtdProdutosTable(qs)
     RequestConfig(request, paginate={"per_page": 25}).configure(table)
     return render(request, 'produtos/total_produtos.html', {
         'title': 'Vendas de produtos',
@@ -565,7 +610,6 @@ def delete_categoria_despesa(request, categoria_despesa_id):
     categoria.delete()
     messages.success(request, 'A categoria foi deletada com sucesso!')
     return redirect('categoria_despesa')
-
 
 @login_required
 def entradas(request):

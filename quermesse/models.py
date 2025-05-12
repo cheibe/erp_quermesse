@@ -58,7 +58,7 @@ class Produto(models.Model):
         return self.nome
 
 class Caixa(models.Model):
-    cliente = models.ForeignKey(Clientes, on_delete=models.PROTECT, verbose_name='Operador')
+    cliente = models.ForeignKey(Clientes, on_delete=models.PROTECT, verbose_name='Operador', db_index=True)
     valor = models.DecimalField(verbose_name='Valor total', decimal_places=2, max_digits=20)
     data = models.DateField(verbose_name='Data de operação')
     descricao = models.CharField(verbose_name='Descrição', blank=True, null=True, max_length=250)
@@ -71,6 +71,11 @@ class Caixa(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     assign_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Modificado por', on_delete=models.PROTECT, related_name='clienteCaixa_user_assign', blank=True, null=True)
     modified = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['cliente'])
+        ]
 
     def __str__(self):
         return self.cliente.nome

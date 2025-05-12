@@ -1,5 +1,105 @@
 {% extends "base.html" %}
+{% load django_tables2 %}
+{% load l10n humanize %}
 
 {% block conteudo %}
-    
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 col-sm-8 col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="mb-0 font-weight-bold">Total vendido</h1>
+                </div>
+                <div class="card-body text-center">
+                    <p class="card-title mb-0" style="font-size:2rem">
+                        R$ {{ soma_total_bruto|floatformat:2 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-8 col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="mb-0 font-weight-bold">Total de saidas</h1>
+                </div>
+                <div class="card-body text-center">
+                    <p class="card-title mb-0" style="font-size:2rem">
+                            R$ {{ soma_total_despesa|floatformat:2|intcomma }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-8 col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="mb-0 font-weight-bold">Total liquido</h1>
+                </div>
+                <div class="card-body text-center">
+                    <p class="card-title mb-0" style="font-size:2rem">
+                        R$ {{ soma_total_liquido|floatformat:2 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 col-sm-8 col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="mb-0 font-weight-bold">Total fiado</h1>
+                </div>
+                <div class="card-body text-center">
+                    <p class="card-title mb-0" style="font-size:2rem">
+                        R$ {{ soma_total_fiado|floatformat:2 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-8 col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="mb-0 font-weight-bold">Total fiado pago</h1>
+                </div>
+                <div class="card-body text-center">
+                    <p class="card-title mb-0" style="font-size:2rem">
+                            R$ {{ soma_fiado_pago|floatformat:2|intcomma }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-8 col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="mb-0 font-weight-bold">Total fiado em aberto</h1>
+                </div>
+                <div class="card-body text-center">
+                    <p class="card-title mb-0" style="font-size:2rem">
+                        R$ {{ soma_fiado_aberto|floatformat:2 }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h1 class="mb-0 font-weight-bold">Produtos mais vendidos</h1>
+    </div>
+    <div class="card-body">
+        {% render_table table_produto "django_tables2/bootstrap4.html" %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h1 class="mb-0 font-weight-bold">Operadores que mais venderam</h1>
+    </div>
+    <div class="card-body">
+        {% render_table table_operador "django_tables2/bootstrap4.html" %}
+    </div>
+</div>
 {% endblock conteudo %}
