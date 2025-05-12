@@ -132,3 +132,16 @@ class EntradasTable(tables.Table):
         template_name = "django_tables2/bootstrap4.html"
         attrs = {'class': 'table table-bordered table-hover'}
         fields = ('categoria', 'valor', 'data')
+
+class QtdProdutos(tables.Table):
+    produto = tables.Column(verbose_name='Produto', orderable=False)
+    total_qtd = tables.Column(verbose_name='Quantidade total', orderable=False)
+    total_valor = tables.Column(verbose_name='Valor total', orderable=False)
+
+    class Meta:
+        template_name = "django_tables2/bootstrap4.html"
+        fields = ('produto', 'total_qtd', 'total_valor')
+
+    def render_total_valor(self, value):
+        formatted = f"{value:.2f}"
+        return formatted.replace('.', ',')

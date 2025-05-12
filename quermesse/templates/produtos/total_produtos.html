@@ -2,17 +2,9 @@
 {% load django_tables2 %}
 
 {% block conteudo %}
-    <a href="{% url 'caixas' %}" class="btn btn-primary mb-3">
+    <a href="{% url 'produtos' %}" class="btn btn-primary mb-3">
         <span class="fas fa-arrow-left mr-1"></span>
         Voltar
-    </a>
-    <a href="{% url 'add_produto' %}" class="btn btn-primary mb-3">
-        <span class="fas fa-plus mr-1"></span>
-        Cadastrar
-    </a>
-    <a href="{% url "total_produtos" %}" class="btn btn-primary mb-3">
-        <span class="fas fa-list-ul mr-1"></span>
-        Total vendido
     </a>
     <div class="card">
         <div class="card-body">

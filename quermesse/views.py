@@ -3,7 +3,7 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum
+from django.db.models import Sum, F, DecimalField
 from django.db import transaction
 from django.utils import timezone
 from django_tables2 import RequestConfig
@@ -349,6 +349,27 @@ def delete_produto(request, produto_id):
     produto.delete()
     messages.success(request, 'O produto foi deletado com sucesso!')
     return redirect('produtos')
+
+@login_required
+def total_produtos(request):
+    qs = (
+        models.ItemCaixa.objects
+        .values(produto=F('produtos__nome'))
+        .annotate(
+            total_qtd = Sum('quantidade'),
+            total_valor = Sum(
+                F('quantidade') * F('produtos__valor'),
+                output_field=DecimalField(decimal_places=2)
+            )
+        )
+        .order_by('produto')
+    )
+    table = tables.QtdProdutos(qs)
+    RequestConfig(request, paginate={"per_page": 25}).configure(table)
+    return render(request, 'produtos/total_produtos.html', {
+        'title': 'Vendas de produtos',
+        'table': table
+    })
 
 @login_required
 def caixas(request):
