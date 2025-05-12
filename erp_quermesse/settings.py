@@ -77,16 +77,16 @@ DATABASES = {
 }
 
 #mysql
-# DATABASES = {
-#     'default': {
-#         'ENGINE': os.getenv('DJANGO_ENGINE'),
-#         'NAME': os.getenv('DJANGO_NAME'),
-#         'USER': os.getenv('DJANGO_USER'),
-#         'PASSWORD': os.getenv('DJANGO_PASSWORD'),
-#         'HOST': os.getenv('DJANGO_HOST'),
-#         'PORT': os.getenv('DJANGO_PORT'),
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': os.getenv('DJANGO_ENGINE'),
+        'NAME': os.getenv('DJANGO_NAME'),
+        'USER': os.getenv('DJANGO_USER'),
+        'PASSWORD': os.getenv('DJANGO_PASSWORD'),
+        'HOST': os.getenv('DJANGO_HOST'),
+        'PORT': os.getenv('DJANGO_PORT'),
+    }
+}
 
 
 # Password validation
