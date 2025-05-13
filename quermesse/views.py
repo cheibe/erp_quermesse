@@ -8,10 +8,12 @@ from django.db import transaction
 from django.utils import timezone
 from django_tables2 import RequestConfig
 from django.forms import inlineformset_factory
+from django.http import HttpResponse
 from decimal import Decimal
 from quermesse import tables
 from quermesse import models
 from quermesse import forms
+import openpyxl
 
 ItemCaixaCreatFormSet = inlineformset_factory(
     models.Caixa,
@@ -66,6 +68,7 @@ def home(request):
     )
     qs_fiado_pago = models.Fiado.objects.filter(is_pago=True)
     qs_fiado_aberto = models.Fiado.objects.filter(is_pago=False)
+    qs_fiado_total = models.Fiado.objects.all()
     qs_caixa = models.Caixa.objects.all()
     qs_entrada = models.Entradas.objects.all()
     qs_despesa = models.Despesas.objects.all()
@@ -76,7 +79,7 @@ def home(request):
     soma_total_despesa = qs_despesa.aggregate(total_valor_despesa=Sum('valor'))['total_valor_despesa'] or Decimal('0.00')
     soma_total_bruto = soma_total_caixa + soma_total_entrada
     soma_total_liquido = soma_total_bruto - soma_total_despesa
-    soma_total_fiado = soma_fiado_aberto + soma_fiado_pago
+    soma_total_fiado = qs_fiado_total.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
     table_produto = tables.QtdProdutosTable(qs_produtos)
     table_operador = tables.OperadorTotalTable(qs_operador)
     RequestConfig(request, paginate={"per_page": 5}).configure(table_produto)
@@ -232,7 +235,31 @@ def fiados(request):
             filter_search['datapago'] = datapago
         if is_pago is not None:
             filter_search['is_pago'] = is_pago
-    fiados = models.Fiado.objects.filter(**filter_search).order_by('cliente__nome').all()
+    fiados = models.Fiado.objects.filter(**filter_search).order_by('cliente__nome')
+    fiados_agrupados = (
+        fiados.values('cliente__id', 'cliente__nome')
+        .annotate(total_fiado=Sum('valor'))
+        .order_by('cliente__nome')
+    )
+    if request.GET.get('export') == 'xlsx':
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Fiados por cliente'
+
+        ws.append(['Id cliente', 'Nome do cliente', "Total"])
+
+        for row in fiados_agrupados:
+            ws.append([
+                row['cliente__id'],
+                row['cliente__nome'],
+                float(row['total_fiado'] or 0)
+            ])
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response['Content-Disposition'] = 'attachment; filename="fiados.xlsx"'
+        wb.save(response)
+        return response
     soma_valor = fiados.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
     table = tables.FiadosTable(fiados)
     RequestConfig(request, paginate={"per_page": 15}).configure(table)
