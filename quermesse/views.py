@@ -68,7 +68,6 @@ def home(request):
     )
     qs_fiado_pago = models.Fiado.objects.filter(is_pago=True)
     qs_fiado_aberto = models.Fiado.objects.filter(is_pago=False)
-    qs_fiado_total = models.Fiado.objects.all()
     qs_caixa = models.Caixa.objects.all()
     qs_entrada = models.Entradas.objects.all()
     qs_despesa = models.Despesas.objects.all()
@@ -79,7 +78,7 @@ def home(request):
     soma_total_despesa = qs_despesa.aggregate(total_valor_despesa=Sum('valor'))['total_valor_despesa'] or Decimal('0.00')
     soma_total_bruto = soma_total_caixa + soma_total_entrada
     soma_total_liquido = soma_total_bruto - soma_total_despesa
-    soma_total_fiado = qs_fiado_total.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
+    soma_total_fiado = soma_fiado_aberto + soma_fiado_pago
     table_produto = tables.QtdProdutosTable(qs_produtos)
     table_operador = tables.OperadorTotalTable(qs_operador)
     RequestConfig(request, paginate={"per_page": 5}).configure(table_produto)
