@@ -14,6 +14,10 @@
         <span class="fas fa-list-ul mr-1"></span>
         Produtos
     </a>
+    <a href="{% url 'caixas' %}?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}export=xlsx" class="btn btn-success mb-3">
+        <span class="fas fa-file-excel mr-1"></span>
+        Exportar para XLSX
+    </a>
     <form method="get" class="card mb-4">
         <div class="card-body">
         <div class="form-row justify-content-start align-items-end">

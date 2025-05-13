@@ -14,6 +14,8 @@ from quermesse import tables
 from quermesse import models
 from quermesse import forms
 import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.worksheet.table import Table, TableStyleInfo
 
 ItemCaixaCreatFormSet = inlineformset_factory(
     models.Caixa,
@@ -81,8 +83,6 @@ def home(request):
     soma_total_fiado = soma_fiado_aberto + soma_fiado_pago
     table_produto = tables.QtdProdutosTable(qs_produtos)
     table_operador = tables.OperadorTotalTable(qs_operador)
-    RequestConfig(request, paginate={"per_page": 5}).configure(table_produto)
-    RequestConfig(request, paginate={"per_page": 5}).configure(table_operador)
     return render(request, 'dashboard/dashboard.html', {
         'title': 'Dashboard',
         'soma_fiado_pago': soma_fiado_pago,
@@ -235,24 +235,43 @@ def fiados(request):
         if is_pago is not None:
             filter_search['is_pago'] = is_pago
     fiados = models.Fiado.objects.filter(**filter_search).order_by('cliente__nome')
+
     fiados_agrupados = (
-        fiados.values('cliente__id', 'cliente__nome')
+        fiados.values('cliente__nome')
         .annotate(total_fiado=Sum('valor'))
         .order_by('cliente__nome')
     )
+
     if request.GET.get('export') == 'xlsx':
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = 'Fiados por cliente'
 
-        ws.append(['Id cliente', 'Nome do cliente', "Total"])
+        ws.append(['Nome do cliente', "Total"])
 
         for row in fiados_agrupados:
             ws.append([
-                row['cliente__id'],
                 row['cliente__nome'],
                 float(row['total_fiado'] or 0)
             ])
+
+        ws.column_dimensions['A'].width = 25
+        ws.column_dimensions['B'].width = 20
+
+        row_count = len(fiados_agrupados) + 1
+        header_font = Font(bold=True, color='FFFFFFFF')
+        header_fill = PatternFill(fill_type='solid', fgColor='4F81BD')
+
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        for row in ws.iter_rows(min_row=2, min_col=2, max_col=2, max_row=row_count):
+            for cell in row:
+                cell.number_format = '"R$"#,##0.00'
+                cell.alignment = Alignment(horizontal='right', vertical='center')
+
         response = HttpResponse(
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
@@ -435,6 +454,44 @@ def total_produtos(request):
         )
         .order_by('produto')
     )
+    if request.GET.get('export') == 'xlsx':
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Produtos'
+        ws.append(['Nome produto', 'Quantidade total', 'Valor total'])
+
+        for row in qs:
+            ws.append([
+                row['produto'],
+                row['total_qtd'],
+                float(row['total_valor'] or 0)
+            ])
+
+        ws.column_dimensions['A'].width = 20
+        ws.column_dimensions['B'].width = 20
+        ws.column_dimensions['C'].width = 30
+        ws.freeze_panes = 'A2'
+
+        row_count = len(qs) + 1
+        header_font = Font(bold=True, color='FFFFFFFF')
+        header_fill = PatternFill(fill_type='solid', fgColor='4F81BD')
+
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        for row in ws.iter_rows(min_row=2, min_col=3, max_col=3, max_row=row_count):
+            for cell in row:
+                cell.number_format = '"R$"#,##0.00'
+                cell.alignment = Alignment(horizontal='right', vertical='center')
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response['Content-Disposition'] = 'attachment; filename="produtos.xlsx"'
+        wb.save(response)
+        return response
     table = tables.QtdProdutosTable(qs)
     RequestConfig(request, paginate={"per_page": 25}).configure(table)
     return render(request, 'produtos/total_produtos.html', {
@@ -456,6 +513,89 @@ def caixas(request):
         if data:
             filter_search['data'] = data
     caixas = models.Caixa.objects.filter(**filter_search).order_by('cliente__nome').all()
+    caixas_agrupados = (
+        caixas.values('cliente__id', 'cliente__nome')
+        .annotate(
+            total_caixa = Sum('valor'),
+            total_dinheiro = Sum('qtd_dinheiro'),
+            total_cd = Sum('qtd_cd'),
+            total_cc = Sum('qtd_cc'),
+            total_pix = Sum('pix'),
+        )
+        .order_by('cliente__nome')
+    )
+    if request.GET.get('export') == 'xlsx':
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Caixas'
+        ws.append(['Nome operador', 'Total', 
+                    'Total em dinheiro', 'Total em catão de débito',
+                    'Total em catão de crédito', 'Total em pix',
+                ])
+        for row in caixas_agrupados:
+            ws.append([
+                row['cliente__nome'],
+                row['total_caixa'],
+                row['total_dinheiro'],
+                row['total_cd'],
+                row['total_cc'],
+                row['total_pix']
+            ])
+
+        ws.column_dimensions['A'].width = 20
+        ws.column_dimensions['B'].width = 20
+        ws.column_dimensions['C'].width = 30
+        ws.column_dimensions['D'].width = 30
+        ws.column_dimensions['E'].width = 30
+        ws.column_dimensions['F'].width = 20
+        ws.freeze_panes = 'A2'
+
+        row_count = len(caixas_agrupados) + 1
+        header_font = Font(bold=True, color='FFFFFFFF')
+        header_fill = PatternFill(fill_type='solid', fgColor='4F81BD')
+
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        for row in ws.iter_rows(min_row=2, min_col=2, max_col=6, max_row=row_count):
+            for cell in row:
+                cell.number_format = '"R$"#,##0.00'
+                cell.alignment = Alignment(horizontal='right', vertical='center')
+
+        table_ref = f"A1:G{row_count}"
+        tab = Table(displayName="Caixas", ref=table_ref)
+        style = TableStyleInfo(
+            name="TableStyleMedium9",
+            showFirstColumn=False,
+            showLastColumn=False,
+            showRowStripes=True,
+            showColumnStripes=True
+        )
+        tab.tableStyleInfo = style
+        ws.add_table(tab)
+
+        total_row = row_count + 2
+        cell_head = ws.cell(row=total_row, column=1, value="Total Geral:")
+        cell_head.font = Font(bold=True)
+        cell_head = Alignment(horizontal="right")
+        cell = ws.cell(
+            row=total_row,
+            column=2,
+            value=f"=SUM(Caixas[Total])"
+        )
+        cell.number_format = '"R$"#,##0.00'
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal="right")
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response['Content-Disposition'] = 'attachment; filename="caixas.xlsx"'
+        wb.save(response)
+        return response
+
     soma_valor = caixas.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
     soma_dinheiro = caixas.aggregate(total_valor=Sum('qtd_dinheiro'))['total_valor'] or Decimal('0.00')
     soma_cd = caixas.aggregate(total_valor=Sum('qtd_cd'))['total_valor'] or Decimal('0.00')
@@ -650,7 +790,63 @@ def entradas(request):
             filter_search['categoria'] = categoria
         if data:
             filter_search['data'] = data
-    entradas = models.Entradas.objects.filter(**filter_search).all()
+    entradas = models.Entradas.objects.filter(**filter_search).order_by('categoria__nome').all()
+    entradas_agrupadas = (
+        entradas.values('categoria__nome')
+        .annotate(total_entrada=Sum('valor'))
+        .order_by('categoria__nome')
+    )
+
+    if request.GET.get('export') == 'xlsx':
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Entradas'
+
+        ws.append(['Categoria', 'Total'])
+
+        for row in entradas_agrupadas:
+            ws.append([
+                row['categoria__nome'],
+                float(row['total_entrada'] or 0)
+            ])
+
+        ws.column_dimensions['A'].width = 25
+        ws.column_dimensions['B'].width = 20
+
+        row_count = len(entradas_agrupadas) + 1
+        header_font = Font(bold=True, color='FFFFFFFF')
+        header_fill = PatternFill(fill_type='solid', fgColor='4F81BD')
+
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        for row in ws.iter_rows(min_row=2, min_col=2, max_col=2, max_row=row_count):
+            for cell in row:
+                cell.number_format = '"R$"#,##0.00'
+                cell.alignment = Alignment(horizontal='right', vertical='center')
+
+        total_row = row_count + 2
+        sum_range = f"B2:B{row_count}"
+        cell_head = ws.cell(row=total_row, column=1, value="Total Geral:")
+        cell_head.font = Font(bold=True)
+        cell_head = Alignment(horizontal="right")
+        cell = ws.cell(
+            row=total_row,
+            column=2,
+            value=f"=SUM({sum_range})"
+        )
+        cell.number_format = '"R$"#,##0.00'
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal="right")
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response['Content-Disposition'] = 'attachment; filename="entradas.xlsx"'
+        wb.save(response)
+        return response
     soma_valor = entradas.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
     table = tables.EntradasTable(entradas)
     RequestConfig(request, paginate={"per_page": 25}).configure(table)
@@ -724,6 +920,62 @@ def despesas(request):
         if is_pago:
             filter_search['is_pago'] = is_pago
     despesas = models.Despesas.objects.filter(**filter_search).order_by('categoria__nome').all()
+    despesas_agrupadas = (
+        despesas.values('categoria__nome')
+        .annotate(total_entrada=Sum('valor'))
+        .order_by('categoria__nome')
+    )
+
+    if request.GET.get('export') == 'xlsx':
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Despesas'
+
+        ws.append(['Categoria', 'Total'])
+
+        for row in despesas_agrupadas:
+            ws.append([
+                row['categoria__nome'],
+                float(row['total_entrada'] or 0)
+            ])
+
+        ws.column_dimensions['A'].width = 25
+        ws.column_dimensions['B'].width = 20
+
+        row_count = len(despesas_agrupadas) + 1
+        header_font = Font(bold=True, color='FFFFFFFF')
+        header_fill = PatternFill(fill_type='solid', fgColor='4F81BD')
+
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        for row in ws.iter_rows(min_row=2, min_col=2, max_col=2, max_row=row_count):
+            for cell in row:
+                cell.number_format = '"R$"#,##0.00'
+                cell.alignment = Alignment(horizontal='right', vertical='center')
+
+        total_row = row_count + 2
+        sum_range = f"B2:B{row_count}"
+        cell_head = ws.cell(row=total_row, column=1, value="Total Geral:")
+        cell_head.font = Font(bold=True)
+        cell_head = Alignment(horizontal="right")
+        cell = ws.cell(
+            row=total_row,
+            column=2,
+            value=f"=SUM({sum_range})"
+        )
+        cell.number_format = '"R$"#,##0.00'
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal="right")
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response['Content-Disposition'] = 'attachment; filename="despesas.xlsx"'
+        wb.save(response)
+        return response
     soma_valor = despesas.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
     table = tables.DespesasTable(despesas)
     RequestConfig(request, paginate={"per_page": 15}).configure(table)
