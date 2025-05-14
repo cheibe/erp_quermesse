@@ -66,7 +66,7 @@ class Caixa(models.Model):
     qtd_cd = models.DecimalField(verbose_name='Valor em cartão de débito', decimal_places=2, max_digits=20)
     qtd_cc = models.DecimalField(verbose_name='Valor em cartão de crédito', decimal_places=2, max_digits=20)
     pix = models.DecimalField(verbose_name='Pix', decimal_places=2, max_digits=20)
-    reimpressao = models.DecimalField(verbose_name='Reimpressão', decimal_places=2, max_digits=15, blank=True)
+    reimpressao = models.DecimalField(verbose_name='Reimpressão', decimal_places=2, max_digits=15, blank=True, default=0.00)
     produtos = models.ManyToManyField(Produto, through='ItemCaixa', related_name='caixas')
     create_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Criado por', on_delete=models.PROTECT, related_name='clienteCaixa_user_create', blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
