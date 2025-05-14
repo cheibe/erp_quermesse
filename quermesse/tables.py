@@ -87,6 +87,7 @@ class CaixaTable(tables.Table):
     qtd_cc = tables.Column(
         verbose_name='Valor cartão de crédito', orderable=False)
     pix = tables.Column(verbose_name='Valor em pix', orderable=False)
+    reimpressao = tables.Column(verbose_name='Valor de reimpressão', orderable=False)
     valor = tables.Column(verbose_name='Valor total', orderable=False)
     opcoes = tables.TemplateColumn(
         template_name='caixas/botao_acoes_caixas.html', verbose_name='Opções', orderable=False)
@@ -96,7 +97,7 @@ class CaixaTable(tables.Table):
         template_name = "django_tables2/bootstrap4.html"
         attrs = {'class': 'table table-bordered table-hover'}
         fields = ('cliente', 'data', 'qtd_dinheiro',
-                  'qtd_cd', 'qtd_cc', 'pix', 'valor')
+                  'qtd_cd', 'qtd_cc', 'pix', 'reimpressao','valor')
 
 
 class CategoriaEntradaTable(tables.Table):

@@ -521,6 +521,7 @@ def caixas(request):
             total_cd = Sum('qtd_cd'),
             total_cc = Sum('qtd_cc'),
             total_pix = Sum('pix'),
+            total_reimpressao = Sum('reimpressao')
         )
         .order_by('cliente__nome')
     )
@@ -531,6 +532,7 @@ def caixas(request):
         ws.append(['Nome operador', 'Total', 
                     'Total em dinheiro', 'Total em catão de débito',
                     'Total em catão de crédito', 'Total em pix',
+                    'Total de reimpressão'
                 ])
         for row in caixas_agrupados:
             ws.append([
@@ -539,7 +541,8 @@ def caixas(request):
                 row['total_dinheiro'],
                 row['total_cd'],
                 row['total_cc'],
-                row['total_pix']
+                row['total_pix'],
+                row['total_reimpressao']
             ])
 
         ws.column_dimensions['A'].width = 20
@@ -548,6 +551,7 @@ def caixas(request):
         ws.column_dimensions['D'].width = 30
         ws.column_dimensions['E'].width = 30
         ws.column_dimensions['F'].width = 20
+        ws.column_dimensions['G'].width = 30
         ws.freeze_panes = 'A2'
 
         row_count = len(caixas_agrupados) + 1
@@ -559,7 +563,7 @@ def caixas(request):
             cell.fill = header_fill
             cell.alignment = Alignment(horizontal='center', vertical='center')
 
-        for row in ws.iter_rows(min_row=2, min_col=2, max_col=6, max_row=row_count):
+        for row in ws.iter_rows(min_row=2, min_col=2, max_col=7, max_row=row_count):
             for cell in row:
                 cell.number_format = '"R$"#,##0.00'
                 cell.alignment = Alignment(horizontal='right', vertical='center')
@@ -597,10 +601,11 @@ def caixas(request):
         return response
 
     soma_valor = caixas.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
-    soma_dinheiro = caixas.aggregate(total_valor=Sum('qtd_dinheiro'))['total_valor'] or Decimal('0.00')
+    soma_dinheiro = caixas.aggregate(total_valor=Sum('qtd_dinheiro'))['total_valor'] or Decimal('0.00') - caixas.aggregate(total_valor_reimpressao=Sum('reimpressao'))['total_valor_reimpressao'] or Decimal('0.00')
     soma_cd = caixas.aggregate(total_valor=Sum('qtd_cd'))['total_valor'] or Decimal('0.00')
     soma_cc = caixas.aggregate(total_valor=Sum('qtd_cc'))['total_valor'] or Decimal('0.00')
     soma_pix = caixas.aggregate(total_valor=Sum('pix'))['total_valor'] or Decimal('0.00')
+    soma_reimpressao = caixas.aggregate(total_valor_reimpressao=Sum('reimpressao'))['total_valor_reimpressao'] or Decimal('0.00')
     table = tables.CaixaTable(caixas)
     RequestConfig(request, paginate={"per_page": 25}).configure(table)
     return render(request, 'caixas/caixas.html', {
@@ -611,7 +616,8 @@ def caixas(request):
         'soma_dinheiro': soma_dinheiro,
         'soma_cd': soma_cd,
         'soma_cc': soma_cc,
-        'soma_pix': soma_pix
+        'soma_pix': soma_pix,
+        'soma_reimpressao': soma_reimpressao
     })
 
 @login_required

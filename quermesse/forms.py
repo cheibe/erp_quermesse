@@ -143,6 +143,7 @@ class CaixaForm(forms.ModelForm):
             'qtd_cd',
             'qtd_cc',
             'pix',
+            'reimpressao'
         ]
         widgets = {
             'data': forms.widgets.DateInput(attrs={'type': 'date'}),
