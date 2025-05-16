@@ -86,4 +86,23 @@
             </h5>
         </div>
     </div>
+    <div id="target-modal"></div>
 {% endblock conteudo %}
+
+{% block script %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.btn-delete-modal').on('click', function () {
+                const id = $(this).data('id');
+                $.ajax({
+                    method: 'GET',
+                    url: '{% url "delete_caixa_modal" %}?id=' + id,
+                    success: function (data) {
+                        $('#target-modal').html(data);
+                        $('#confirmDeleteModal').modal();
+                    }
+                })
+            });
+        })
+    </script>
+{% endblock script %}

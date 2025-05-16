@@ -4,6 +4,8 @@
     </button>
     <div class="dropdown-menu">
         <a class="dropdown-item" href="{% url 'edit_categoria_entrada' record.id %}">Editar</a>
-        <a class="dropdown-item" href="{% url 'delete_categoria_entrada' record.id %}">Deletar</a>
+        <button class="dropdown-item bg-danger text-white btn-delete-modal" data-id="{{ record.id }}">
+            Deletar
+        </button>
     </div>
 </div>

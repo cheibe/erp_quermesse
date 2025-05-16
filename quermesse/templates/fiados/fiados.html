@@ -70,15 +70,34 @@
         <span class="badge badge-info">{{ soma_valor|floatformat:2 }}</span>
         </h5>
     </div>
+
+    <div id="target-modal"></div>
 {% endblock conteudo %}
+
 {% block script %}
-<script>
-    document.getElementById('select-all')
-        .addEventListener('change', function(e) {
-            const checked = e.target.checked;
-            document.querySelectorAll('input.row-select').forEach(function(cb) {
-            cb.checked = checked;
+    <script>
+        document.getElementById('select-all')
+            .addEventListener('change', function(e) {
+                const checked = e.target.checked;
+                document.querySelectorAll('input.row-select').forEach(function(cb) {
+                cb.checked = checked;
+                });
             });
-        });
-</script>
+    </script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.btn-delete-modal').on('click', function () {
+                const id = $(this).data('id');
+                $.ajax({
+                    method: 'GET',
+                    url: '{% url "delete_fiado_modal" %}?id=' + id,
+                    success: function (data) {
+                        $('#target-modal').html(data);
+                        $('#confirmDeleteModal').modal();
+                    }
+                })
+            });
+        })
+    </script>
 {% endblock script %}

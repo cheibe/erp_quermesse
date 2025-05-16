@@ -14,7 +14,7 @@ from quermesse import tables
 from quermesse import models
 from quermesse import forms
 import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
 ItemCaixaCreatFormSet = inlineformset_factory(
@@ -146,11 +146,21 @@ def edit_cliente(request, cliente_id):
     })
 
 @login_required
+def delete_cliente_modal(request):
+    pk = request.GET.get('id')
+    record = get_object_or_404(models.Clientes, id=pk)
+    return render(request, 'clientes/confirmar_deletar.html', {
+        'record': record
+    })
+
+@login_required
 def delete_cliente(request, cliente_id):
     cliente = get_object_or_404(models.Clientes, pk=cliente_id)
-    cliente.delete()
-    messages.success(request, f'O cliente foi excluido com sucesso!')
-    return redirect('clientes')
+    if request.method == 'POST':
+        cliente.delete()
+        messages.success(request, 'O cliente foi excluido com sucesso!')
+        return redirect('clientes')
+    return HttpResponse(status=405)
 
 @login_required
 def autorizados(request):
@@ -198,11 +208,21 @@ def edit_autorizado(request, autorizado_id):
     })
 
 @login_required
+def delete_autorizado_modal(request):
+    pk = request.GET.get('id')
+    record = get_object_or_404(models.ClienteUsuario, id=pk)
+    return render(request, 'autorizados/confirmar_deletar.html', {
+        'record': record
+    })
+
+@login_required
 def delete_autorizado(request, autorizado_id):
     autorizado = get_object_or_404(models.ClienteUsuario, pk=autorizado_id)
-    autorizado.delete()
-    messages.success(request, 'O usuario autorizado foi deletado com sucesso!')
-    return redirect('autorizados')
+    if request.method == 'POST':
+        autorizado.delete()
+        messages.success(request, 'O usuario autorizado foi deletado com sucesso!')
+        return redirect('autorizados')
+    return HttpResponse(status=405)
 
 @login_required
 def fiados(request):
@@ -326,11 +346,21 @@ def edit_fiado(request, fiado_id):
     })
 
 @login_required
+def delete_fiado_modal(request):
+    pk = request.GET.get('id')
+    record = get_object_or_404(models.Fiado, id=pk)
+    return render(request, 'fiados/confirmar_deletar.html', {
+        'record': record
+    })
+
+@login_required
 def delete_fiado(request, fiado_id):
     fiado = get_object_or_404(models.Fiado, pk=fiado_id)
-    fiado.delete()
-    messages.success(request, 'O fiado foi excluido com sucesso!')
-    return redirect('fiados')
+    if request.method == 'POST':
+        fiado.delete()
+        messages.success(request, 'O fiado foi excluido com sucesso!')
+        return redirect('fiados')
+    return HttpResponse(status=405)
 
 @login_required
 def operadores(request):
@@ -381,11 +411,21 @@ def edit_operador(request, operador_id):
     })
 
 @login_required
+def delete_operador_modal(request):
+    pk = request.GET.get('id')
+    record = get_object_or_404(models.Clientes, id=pk)
+    return render(request, 'operadores/confirmar_deletar.html', {
+        'record': record
+    })
+
+@login_required
 def delete_operador(request, operador_id):
     operador = get_object_or_404(models.Clientes, pk=operador_id)
-    operador.delete()
-    messages.success(request, 'O operador foi deletado com sucesso!')
-    return redirect('operadores')
+    if request.method == 'POST':
+        operador.delete()
+        messages.success(request, 'O operador foi deletado com sucesso!')
+        return redirect('operadores')
+    return HttpResponse(status=405)
 
 @login_required
 def produtos(request):
@@ -434,11 +474,21 @@ def edit_produto(request, produto_id):
     })
 
 @login_required
+def delete_produto_modal(request):
+    pk = request.GET.get('id')
+    record = get_object_or_404(models.Produto, id=pk)
+    return render(request, 'produtos/confirmar_deletar.html', {
+        'record': record
+    })
+
+@login_required
 def delete_produto(request, produto_id):
     produto = get_object_or_404(models.Produto, pk=produto_id)
-    produto.delete()
-    messages.success(request, 'O produto foi deletado com sucesso!')
-    return redirect('produtos')
+    if request.method == 'POST':
+        produto.delete()
+        messages.success(request, 'O produto foi deletado com sucesso!')
+        return redirect('produtos')
+    return HttpResponse(status=405)
 
 @login_required
 def total_produtos(request):
@@ -587,7 +637,7 @@ def caixas(request):
         cell = ws.cell(
             row=total_row,
             column=2,
-            value=f"=SUM(Caixas[Total])"
+            value="=SUM(Caixas[Total])"
         )
         cell.number_format = '"R$"#,##0.00'
         cell.font = Font(bold=True)
@@ -601,7 +651,9 @@ def caixas(request):
         return response
 
     soma_valor = caixas.aggregate(total_valor=Sum('valor'))['total_valor'] or Decimal('0.00')
-    soma_dinheiro = caixas.aggregate(total_valor=Sum('qtd_dinheiro'))['total_valor'] or Decimal('0.00') - caixas.aggregate(total_valor_reimpressao=Sum('reimpressao'))['total_valor_reimpressao'] or Decimal('0.00')
+    soma_dinheiro_interno = caixas.aggregate(total_valor=Sum('qtd_dinheiro'))['total_valor'] or Decimal('0.00')
+    soma_reimpressao_interno = caixas.aggregate(total_valor_reimpressao=Sum('reimpressao'))['total_valor_reimpressao'] or Decimal('0.00')
+    soma_dinheiro = soma_dinheiro_interno - soma_reimpressao_interno
     soma_cd = caixas.aggregate(total_valor=Sum('qtd_cd'))['total_valor'] or Decimal('0.00')
     soma_cc = caixas.aggregate(total_valor=Sum('qtd_cc'))['total_valor'] or Decimal('0.00')
     soma_pix = caixas.aggregate(total_valor=Sum('pix'))['total_valor'] or Decimal('0.00')
@@ -632,7 +684,7 @@ def add_caixa(request):
             caixa.save()
             formset.instance = caixa
             formset.save()
-            messages.success(request, f'O novo registro do caixa foi feito com sucesso!')
+            messages.success(request, 'O novo registro do caixa foi feito com sucesso!')
             return redirect('caixas')
     else:
         form = forms.CaixaForm()
@@ -667,11 +719,21 @@ def edit_caixa(request, caixa_id):
     })
 
 @login_required
+def delete_caixa_modal(request):
+    pk = request.GET.get('id')
+    record = get_object_or_404(models.Caixa, id=pk)
+    return render(request, 'caixas/confirmar_deletar.html', {
+        'record': record
+    })
+
+@login_required
 def delete_caixa(request, caixa_id):
     qs_caixa = get_object_or_404(models.Caixa, pk=caixa_id)
-    qs_caixa.delete()
-    messages.success(request, 'O registro do caixa foi deletado com sucesso!')
-    return redirect('caixas')
+    if request.method == 'POST':
+        qs_caixa.delete()
+        messages.success(request, 'O registro do caixa foi deletado com sucesso!')
+        return redirect('caixas')
+    return HttpResponse(status=405)
 
 @login_required
 def categoria_entrada(request):
@@ -722,11 +784,21 @@ def edit_categoria_entrada(request, categoria_entrada_id):
     })
 
 @login_required
+def delete_categoria_entrada_modal(request):
+    pk = request.GET.get('id')
+    record = get_object_or_404(models.Categoria, id=pk)
+    return render(request, 'categorias/confirmar_deletar_entrada.html', {
+        'record': record
+    })
+
+@login_required
 def delete_categoria_entrada(request, categoria_entrada_id):
     categoria = get_object_or_404(models.Categoria, pk=categoria_entrada_id)
-    categoria.delete()
-    messages.success(request, 'A categoria foi deletada com sucesso!')
-    return redirect('categoria_entrada')
+    if request.method == 'POST':
+        categoria.delete()
+        messages.success(request, 'A categoria foi deletada com sucesso!')
+        return redirect('categoria_entrada')
+    return HttpResponse(status=405)
 
 @login_required
 def categoria_despesa(request):
@@ -777,11 +849,21 @@ def edit_categoria_despesa(request, categoria_despesa_id):
     })
 
 @login_required
+def delete_categoria_despesa_modal(request):
+    pk = request.GET.get('id')
+    record = get_object_or_404(models.Categoria, id=pk)
+    return render(request, 'categorias/confirmar_deletar_despesa.html', {
+        'record': record
+    })
+
+@login_required
 def delete_categoria_despesa(request, categoria_despesa_id):
     categoria = get_object_or_404(models.Categoria, pk=categoria_despesa_id)
-    categoria.delete()
-    messages.success(request, 'A categoria foi deletada com sucesso!')
-    return redirect('categoria_despesa')
+    if request.method == 'POST':
+        categoria.delete()
+        messages.success(request, 'A categoria foi deletada com sucesso!')
+        return redirect('categoria_despesa')
+    return HttpResponse(status=405)
 
 @login_required
 def entradas(request):
@@ -900,11 +982,21 @@ def edit_entrada(request, entrada_id):
     })
 
 @login_required
+def delete_entrada_modal(request):
+    pk = request.GET.get('id')
+    record = get_object_or_404(models.Entradas, id=pk)
+    return render(request, 'entradas/confirmar_deletar.html', {
+        'record': record
+    })
+
+@login_required
 def delete_entrada(request, entrada_id):
     entrada = get_object_or_404(models.Entradas, pk=entrada_id)
-    entrada.delete()
-    messages.success(request, 'O registro da entrada foi deletado com sucesso!')
-    return redirect('entradas')
+    if request.method == 'POST':
+        entrada.delete()
+        messages.success(request, 'O registro da entrada foi deletado com sucesso!')
+        return redirect('entradas')
+    return HttpResponse(status=405)
 
 @login_required
 def despesas(request):
@@ -1029,8 +1121,18 @@ def edit_despesa(request, despesa_id):
     })
 
 @login_required
+def delete_despesa_modal(request):
+    pk = request.GET.get('id')
+    record = get_object_or_404(models.Despesas, id=pk)
+    return render(request, 'despesas/confirmar_deletar.html', {
+        'record': record
+    })
+
+@login_required
 def delete_despesa(request, despesa_id):
     despesa = get_object_or_404(models.Despesas, pk=despesa_id)
-    despesa.delete()
-    messages.success(request, 'O registro de despesa foi excluido com sucesso')
-    return redirect('despesas')
+    if request.method == 'POST':
+        despesa.delete()
+        messages.success(request, 'O registro de despesa foi excluido com sucesso')
+        return redirect('despesas')
+    return HttpResponse(status=405)

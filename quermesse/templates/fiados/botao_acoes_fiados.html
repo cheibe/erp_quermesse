@@ -3,7 +3,9 @@
         Opções
     </button>
     <div class="dropdown-menu">
-        <a class="dropdown-item" href="{% url 'edit_fiado' record.id %}">Editar</a>
-        <a class="dropdown-item" href="{% url 'delete_fiado' record.id %}">Deletar</a>
+        <a class="dropdown-item" href="{% url 'edit_fiado' record.pk %}">Editar</a>
+        <button class="dropdown-item bg-danger text-white btn-delete-modal" data-id="{{ record.id }}" type="button">
+            Deletar
+        </button>
     </div>
 </div>
