@@ -563,6 +563,7 @@ def caixas(request):
         if data:
             filter_search['data'] = data
     caixas = models.Caixa.objects.filter(**filter_search).order_by('cliente__nome').all()
+    caixas_fiados = models.Caixa.objects.filter(cliente__nome__icontains='fiado')
     caixas_agrupados = (
         caixas.values('cliente__id', 'cliente__nome')
         .annotate(
@@ -658,6 +659,7 @@ def caixas(request):
     soma_cc = caixas.aggregate(total_valor=Sum('qtd_cc'))['total_valor'] or Decimal('0.00')
     soma_pix = caixas.aggregate(total_valor=Sum('pix'))['total_valor'] or Decimal('0.00')
     soma_reimpressao = caixas.aggregate(total_valor_reimpressao=Sum('reimpressao'))['total_valor_reimpressao'] or Decimal('0.00')
+    soma_caixa_fiado = caixas_fiados.aggregate(total_fiado=Sum('valor'))['total_fiado'] or Decimal('0.00')
     table = tables.CaixaTable(caixas)
     RequestConfig(request, paginate={"per_page": 25}).configure(table)
     return render(request, 'caixas/caixas.html', {
@@ -669,7 +671,8 @@ def caixas(request):
         'soma_cd': soma_cd,
         'soma_cc': soma_cc,
         'soma_pix': soma_pix,
-        'soma_reimpressao': soma_reimpressao
+        'soma_reimpressao': soma_reimpressao,
+        'soma_caixa_fiado': soma_caixa_fiado
     })
 
 @login_required
