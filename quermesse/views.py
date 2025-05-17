@@ -563,7 +563,7 @@ def caixas(request):
         if data:
             filter_search['data'] = data
     caixas = models.Caixa.objects.filter(**filter_search).order_by('cliente__nome').all()
-    caixas_fiados = models.Caixa.objects.filter(cliente__nome__icontains='fiado')
+    caixas_fiados = models.Caixa.objects.filter(**filter_search).filter(cliente__nome__icontains='fiado')
     caixas_agrupados = (
         caixas.values('cliente__id', 'cliente__nome')
         .annotate(
