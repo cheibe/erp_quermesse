@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User, AbstractUser
+from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.core.validators import FileExtensionValidator
 
@@ -132,3 +132,22 @@ class Entradas(models.Model):
 
     def __str__(self):
         return self.categoria.nome
+
+class Cortesia(models.Model):
+    data = models.DateField(verbose_name='Data da operação')
+    produtos = models.ManyToManyField(Produto, through='ItemCortesia', related_name='cortesias')
+    create_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Criado por', on_delete=models.PROTECT, related_name='cortesia_user_create', blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    assign_user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name='Modificado por', on_delete=models.PROTECT, related_name='cortesia_user_assign', blank=True, null=True)
+    modified = models.DateTimeField(auto_now=True)
+
+class ItemCortesia(models.Model):
+    cortesia = models.ForeignKey(Cortesia, on_delete=models.CASCADE, verbose_name='Itens')
+    produtos = models.ForeignKey(Produto, on_delete=models.CASCADE, verbose_name='Produtos')
+    quantidade = models.PositiveIntegerField(verbose_name='Quantidade')
+
+    class Meta:
+        unique_together = ('cortesia', 'produtos')
+
+    def __str__(self):
+        return self.produtos.nome

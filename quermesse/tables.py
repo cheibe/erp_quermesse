@@ -99,6 +99,16 @@ class CaixaTable(tables.Table):
         fields = ('cliente', 'data', 'qtd_dinheiro',
                   'qtd_cd', 'qtd_cc', 'pix', 'reimpressao','valor')
 
+class CortesiaTable(tables.Table):
+    data = tables.Column(verbose_name='Data', orderable=False)
+    opcoes = tables.TemplateColumn(
+        template_name='cortesias/botao_acoes_cortesias.html', verbose_name='Opções', orderable=False)
+
+    class Meta:
+        model = models.Cortesia
+        template_name = "django_tables2/bootstrap4.html"
+        attrs = {'class': 'table table-bordered table-hover'}
+        fields = ('data',)
 
 class CategoriaEntradaTable(tables.Table):
     nome = tables.Column(verbose_name='Categoria', orderable=False)

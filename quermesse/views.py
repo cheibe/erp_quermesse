@@ -33,6 +33,22 @@ ItemCaixaEditFormSet = inlineformset_factory(
     can_delete=True
 )
 
+ItemCortesiaCreatFormSet = inlineformset_factory(
+    models.Cortesia,
+    models.ItemCortesia,
+    fields=('produtos','quantidade'),
+    extra=20,
+    can_delete=True
+)
+
+ItemCortesiaEditFormSet = inlineformset_factory(
+    models.Cortesia,
+    models.ItemCortesia,
+    fields=('produtos','quantidade'),
+    extra=0,
+    can_delete=True
+)
+
 def login(request):
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
@@ -736,6 +752,113 @@ def delete_caixa(request, caixa_id):
         qs_caixa.delete()
         messages.success(request, 'O registro do caixa foi deletado com sucesso!')
         return redirect('caixas')
+    return HttpResponse(status=405)
+
+def cortesia(request):
+    cortesias = models.Cortesia.objects.order_by('-data').all()
+    qs = (
+        models.ItemCortesia.objects
+        .values(produto=F('produtos__nome'))
+        .annotate(
+            total_qtd = Sum('quantidade')
+        )
+        .order_by('-quantidade')
+    )
+
+    if request.GET.get('export') == 'xlsx':
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Cortesias'
+
+        ws.append(['Nome produto', 'Quantidade total'])
+
+        for row in qs:
+            ws.append([
+                row['produto'],
+                row['total_qtd']
+            ])
+
+        ws.column_dimensions['A'].width = 25
+        ws.column_dimensions['B'].width = 20
+
+        header_font = Font(bold=True, color='FFFFFFFF')
+        header_fill = PatternFill(fill_type='solid', fgColor='4F81BD')
+
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        response['Content-Disposition'] = 'attachment; filename="cortesias.xlsx"'
+        wb.save(response)
+        return response
+    table = tables.CortesiaTable(cortesias)
+    RequestConfig(request, paginate={"per_page": 25}).configure(table)
+    return render(request, 'cortesias/cortesias.html', {
+        'title': 'Cortesias',
+        'table': table
+    })
+
+def add_cortesia(request):
+    if request.method == 'POST':
+        form = forms.CortesiaForm(request.POST)
+        formset = ItemCortesiaCreatFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            cortesia = form.save(commit=False)
+            cortesia.create_user = form.cleaned_data.get('create_user') or request.user
+            cortesia.assign_user = form.cleaned_data.get('assign_user') or request.user
+            cortesia.save()
+            formset.instance = cortesia
+            formset.save()
+            messages.success(request, 'O novo registro de cortesia foi feito com sucesso!')
+            return redirect('cortesias')
+    else:
+        form = forms.CortesiaForm()
+        formset = ItemCortesiaCreatFormSet()
+    return render(request, 'cortesias/add_cortesia.html', {
+        'title': 'Adicionar cortesias',
+        'form': form,
+        'formset': formset
+    })
+
+def edit_cortesia(request, cortesia_id):
+    cortesia = get_object_or_404(models.Cortesia, pk=cortesia_id)
+    if request.method == 'POST':
+        form = forms.CortesiaForm(request.POST, instance=cortesia)
+        formset = ItemCortesiaCreatFormSet(request.POST, instance=cortesia)
+        if form.is_valid() and formset.is_valid():
+            with transaction.atomic():
+                cortesia = form.save(commit=False)
+                cortesia.assign_user = request.user
+                cortesia.save()
+                formset.save()
+            messages.success(request, 'O registro de cortesia foi editado com sucesso!')
+            return redirect('cortesias')
+    else:
+        form = forms.CortesiaForm(instance=cortesia)
+        formset = ItemCortesiaCreatFormSet(instance=cortesia)
+    return render(request, 'cortesias/add_cortesia.html', {
+        'title': 'Editar registro de cortesia',
+        'form': form,
+        'formset': formset
+    })
+
+def delete_cortesia_modal(request):
+    pk = request.GET.get('id')
+    record = get_object_or_404(models.Cortesia, id=pk)
+    return render(request, 'cortesias/confirmar_deletar.html', {
+        'record': record
+    })
+
+def delete_cortesia(request, cortesia_id):
+    qs_cortesia = get_object_or_404(models.Cortesia, pk=cortesia_id)
+    if request.method == 'POST':
+        qs_cortesia.delete()
+        messages.success(request, 'O registro de cortesia foi deletado com sucesso!')
+        return redirect('cortesias')
     return HttpResponse(status=405)
 
 @login_required

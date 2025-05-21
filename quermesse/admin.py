@@ -42,6 +42,13 @@ class CaixaAdmin(admin.ModelAdmin):
 class ItemCaixa(admin.ModelAdmin):
     list_display = ('caixa', 'produtos', 'quantidade')
 
+@admin.register(models.Cortesia)
+class CortesiaAdmin(admin.ModelAdmin):
+    list_display = ('data', )
+
+@admin.register(models.ItemCortesia)
+class ItemCortesia(admin.ModelAdmin):
+    list_display = ('cortesia', 'produtos', 'quantidade')
 @admin.register(models.Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
     list_display = ('nome', 'is_despesa', 'is_entrada', 'create_user', 'created', 'assign_user', 'modified')

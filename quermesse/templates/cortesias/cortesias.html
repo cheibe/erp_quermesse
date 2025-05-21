@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load django_tables2 %}
+
+{% block conteudo %}
+    <a href="{% url 'caixas' %}" class="btn btn-primary mb-3">
+        <span class="fas fa-arrow-left mr-1"></span>
+        Voltar
+    </a>
+    <a href="{% url 'add_cortesia' %}" class="btn btn-primary mb-3">
+        <span class="fas fa-plus mr-1"></span>
+        Cadastrar
+    </a>
+    <a href="{% url 'cortesias' %}?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}export=xlsx" class="btn btn-success mb-3">
+        <span class="fas fa-file-excel mr-1"></span>
+        Exportar para XLSX
+    </a>
+    <div class="card">
+        <div class="card-body">
+            {% render_table table "django_tables2/bootstrap4.html" %}
+        </div>
+    </div>
+    <div id="target-modal"></div>
+{% endblock conteudo %}
+
+{% block script %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.btn-delete-modal').on('click', function () {
+                const id = $(this).data('id');
+                $.ajax({
+                    method: 'GET',
+                    url: '{% url "delete_cortesia_modal" %}?id=' + id,
+                    success: function (data) {
+                        $('#target-modal').html(data);
+                        $('#confirmDeleteModal').modal();
+                    }
+                })
+            });
+        })
+    </script>
+{% endblock script %}

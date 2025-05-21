@@ -49,6 +49,12 @@ urlpatterns = [
     path('caixas/delete-modal', views.delete_caixa_modal, name='delete_caixa_modal'),
     path('caixas/delete/<caixa_id>', views.delete_caixa, name='delete_caixa'),
 
+    path('cortesias/', views.cortesia, name='cortesias'),
+    path('cortesias/adicionar', views.add_cortesia, name='add_cortesia'),
+    path('cortesias/editar/<cortesia_id>', views.edit_cortesia, name='edit_cortesia'),
+    path('cortesias/delete-modal', views.delete_cortesia_modal, name='delete_cortesia_modal'),
+    path('cortesias/delete/<cortesia_id>', views.delete_cortesia, name='delete_cortesia'),
+
     path('categoria_entrada/', views.categoria_entrada, name='categoria_entrada'),
     path('categoria_entrada/adicionar', views.add_categoria_entrada, name='add_categoria_entrada'),
     path('categoria_entrada/editar/<categoria_entrada_id>', views.edit_categoria_entrada, name='edit_categoria_entrada'),
