@@ -3,7 +3,8 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum, F, DecimalField
+from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value
+from django.db.models.functions import Coalesce
 from django.db import transaction
 from django.utils import timezone
 from django_tables2 import RequestConfig
@@ -508,15 +509,37 @@ def delete_produto(request, produto_id):
 
 @login_required
 def total_produtos(request):
+    cortesia_qs = (
+        models.ItemCortesia.objects
+        .filter(produtos=OuterRef('produtos'))
+        .values('produtos')
+        .annotate(
+            cortesias_qtd = Sum('quantidade'),
+            cortesias_valor = Sum(
+                F('quantidade') * F('produtos__valor'),
+                output_field=DecimalField(decimal_places=2)
+            )
+        )
+        .values('cortesias_qtd', 'cortesias_valor')
+    )
     qs = (
         models.ItemCaixa.objects
-        .values(produto=F('produtos__nome'))
+        .values('produtos', produto=F('produtos__nome'))
         .annotate(
             total_qtd = Sum('quantidade'),
             total_valor = Sum(
                 F('quantidade') * F('produtos__valor'),
                 output_field=DecimalField(decimal_places=2)
-            )
+            ),
+            cortesias_qtd = Coalesce(Subquery(cortesia_qs.values('cortesias_qtd')), Value(0)),
+            cortesias_valor = Coalesce(Subquery(cortesia_qs.values('cortesias_valor')), 
+                                        Value(0, output_field=DecimalField(decimal_places=2)),
+                                        output_field=DecimalField(decimal_places=2)
+                                        )
+        )
+        .annotate(
+            qtd_liquida = F('total_qtd') - F('cortesias_qtd'),
+            valor_liquido = F('total_valor') - F('cortesias_valor'),
         )
         .order_by('produto')
     )
@@ -524,21 +547,36 @@ def total_produtos(request):
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = 'Produtos'
-        ws.append(['Nome produto', 'Quantidade total', 'Valor total'])
+        ws.append(
+            ['Nome produto', 
+            'Quantidade vendida',
+            'Quantidade de cortesias',
+            'Quantidade líquida',
+            'Valor total',
+            'Valor total cortesias',
+            'Valor total líquido',
+            ])
 
         for row in qs:
             ws.append([
                 row['produto'],
                 row['total_qtd'],
-                float(row['total_valor'] or 0)
+                row['cortesias_qtd'],
+                row['qtd_liquida'],
+                row['total_valor'],
+                row['cortesias_valor'],
+                float(row['valor_liquido'] or 0)
             ])
 
         ws.column_dimensions['A'].width = 20
         ws.column_dimensions['B'].width = 20
         ws.column_dimensions['C'].width = 30
+        ws.column_dimensions['D'].width = 30
+        ws.column_dimensions['E'].width = 30
+        ws.column_dimensions['F'].width = 30
+        ws.column_dimensions['G'].width = 30
         ws.freeze_panes = 'A2'
 
-        row_count = len(qs) + 1
         header_font = Font(bold=True, color='FFFFFFFF')
         header_fill = PatternFill(fill_type='solid', fgColor='4F81BD')
 
@@ -546,8 +584,9 @@ def total_produtos(request):
             cell.font = header_font
             cell.fill = header_fill
             cell.alignment = Alignment(horizontal='center', vertical='center')
-
-        for row in ws.iter_rows(min_row=2, min_col=3, max_col=3, max_row=row_count):
+        
+        row_count = len(qs) + 1
+        for row in ws.iter_rows(min_row=2, min_col=5, max_col=7, max_row=row_count):
             for cell in row:
                 cell.number_format = '"R$"#,##0.00'
                 cell.alignment = Alignment(horizontal='right', vertical='center')
@@ -754,6 +793,7 @@ def delete_caixa(request, caixa_id):
         return redirect('caixas')
     return HttpResponse(status=405)
 
+@login_required
 def cortesia(request):
     cortesias = models.Cortesia.objects.order_by('-data').all()
     qs = (
@@ -802,6 +842,7 @@ def cortesia(request):
         'table': table
     })
 
+@login_required
 def add_cortesia(request):
     if request.method == 'POST':
         form = forms.CortesiaForm(request.POST)
@@ -824,6 +865,7 @@ def add_cortesia(request):
         'formset': formset
     })
 
+@login_required
 def edit_cortesia(request, cortesia_id):
     cortesia = get_object_or_404(models.Cortesia, pk=cortesia_id)
     if request.method == 'POST':
@@ -846,6 +888,7 @@ def edit_cortesia(request, cortesia_id):
         'formset': formset
     })
 
+@login_required
 def delete_cortesia_modal(request):
     pk = request.GET.get('id')
     record = get_object_or_404(models.Cortesia, id=pk)
@@ -853,6 +896,7 @@ def delete_cortesia_modal(request):
         'record': record
     })
 
+@login_required
 def delete_cortesia(request, cortesia_id):
     qs_cortesia = get_object_or_404(models.Cortesia, pk=cortesia_id)
     if request.method == 'POST':

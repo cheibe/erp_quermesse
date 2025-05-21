@@ -178,13 +178,33 @@ class EntradasTable(tables.Table):
 class QtdProdutosTable(tables.Table):
     produto = tables.Column(verbose_name='Produto', orderable=False)
     total_qtd = tables.Column(verbose_name='Quantidade total', orderable=False)
+    cortesias_qtd = tables.Column(verbose_name='Quantidade cortesias', orderable=False)
+    qtd_liquida = tables.Column(verbose_name='Quantidade líquida', orderable=False)
     total_valor = tables.Column(verbose_name='Valor total', orderable=False)
+    cortesias_valor = tables.Column(verbose_name='Valor total cortesia', orderable=False)
+    valor_liquido = tables.Column(verbose_name='Valor líquido', orderable=False)
 
     class Meta:
         template_name = "django_tables2/bootstrap4.html"
-        fields = ('produto', 'total_qtd', 'total_valor')
+        fields = (
+            'produto',
+            'total_qtd',
+            'cortesias_qtd',
+            'qtd_liquida',
+            'total_valor',
+            'cortesias_valor',
+            'valor_liquido',
+        )
 
     def render_total_valor(self, value):
+        formatted = f"{value:.2f}"
+        return formatted.replace('.', ',')
+
+    def render_cortesias_valor(self, value):
+        formatted = f"{value:.2f}"
+        return formatted.replace('.', ',')
+
+    def render_valor_liquido(self, value):
         formatted = f"{value:.2f}"
         return formatted.replace('.', ',')
 
