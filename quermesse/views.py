@@ -10,11 +10,12 @@ from django.utils import timezone
 from django_tables2 import RequestConfig
 from django.forms import inlineformset_factory
 from django.http import HttpResponse
-from decimal import Decimal
 from quermesse import tables
 from quermesse import models
 from quermesse import forms
 import openpyxl
+import os
+from decimal import Decimal
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
@@ -64,6 +65,13 @@ def login(request):
 def logout(request):
     auth_logout(request)
     return redirect('login')
+
+@login_required
+def gerador_bingo(request):
+    api_key = os.getenv('API_KEY', default='')
+    return render(request, 'gerador_bingo/index.html', {
+        'api_key': api_key
+    })
 
 @login_required
 def home(request):

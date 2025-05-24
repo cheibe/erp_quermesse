@@ -68,7 +68,7 @@ WSGI_APPLICATION = 'erp_quermesse.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-#mysql
+
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('DJANGO_ENGINE'),
