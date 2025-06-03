@@ -5,10 +5,12 @@ class TabelaBingo {
     mudarCorAPI(number){
         if (this._numeros_sorteados.includes(number)){
             sortBingo()
+            console.log(`tinha um numero, sorteado novamente ${this._numeros_sorteados}`)
         }
         this._numeros_sorteados.push(number)
         let numeroSorteado = document.getElementById(`cell-${number}`)
         numeroSorteado.classList.add('bg-danger', 'text-white')
+        console.log(`fez um sorteio ${this._numeros_sorteados}`)
 
         if (number >= 1 && number <= 15){
             const pedra_cantada = document.getElementById('pedra')
@@ -132,7 +134,7 @@ document.getElementById('sort-btn')
         .addEventListener('click', sortBingo);
 
 document.getElementById('clean-btn')
-        .addEventListener('click', tabelaBingo.cleanBingo);
+        .addEventListener('click', () => tabelaBingo.cleanBingo());
 
 const tbody = document.getElementById('bingo-body');
 for (let row = 0; row < 15; row++) {
