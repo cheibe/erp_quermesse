@@ -5,7 +5,7 @@ class TabelaBingo {
     mudarCorAPI(number){
         if (this._numeros_sorteados.includes(number)){
             sortBingo()
-            console.log(`tinha um numero, sorteado novamente ${this._numeros_sorteados}`)
+            return
         }
         this._numeros_sorteados.push(number)
         let numeroSorteado = document.getElementById(`cell-${number}`)
@@ -36,7 +36,6 @@ class TabelaBingo {
 
     cleanBingo(){
         this._numeros_sorteados = []
-        console.log(this._numeros_sorteados)
         document.querySelectorAll('td').forEach(td => {
             td.classList.remove('bg-danger', 'text-white');
         });
