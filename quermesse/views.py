@@ -77,6 +77,7 @@ def gerador_bingo(request):
 def home(request):
     qs_produtos = (
         models.ItemCaixa.objects
+        .filter(created__year=2026)
         .values(produto=F('produtos__nome'))
         .annotate(
             total_qtd = Sum('quantidade'),
@@ -89,15 +90,15 @@ def home(request):
     )
     qs_operador = (
         models.Clientes.objects
-                .filter(is_caixa=True)
+                .filter(is_caixa=True, created__year=2026)
                 .annotate(total_vendas=Sum("caixa__valor"))
                 .order_by("-total_vendas")
     )
-    qs_fiado_pago = models.Fiado.objects.filter(is_pago=True)
-    qs_fiado_aberto = models.Fiado.objects.filter(is_pago=False)
-    qs_caixa = models.Caixa.objects.all()
-    qs_entrada = models.Entradas.objects.all()
-    qs_despesa = models.Despesas.objects.all()
+    qs_fiado_pago = models.Fiado.objects.filter(is_pago=True, created__year=2026)
+    qs_fiado_aberto = models.Fiado.objects.filter(is_pago=False, created__year=2026)
+    qs_caixa = models.Caixa.objects.filter(created__year=2026)
+    qs_entrada = models.Entradas.objects.filter(created__year=2026)
+    qs_despesa = models.Despesas.objects.filter(created__year=2026)
     soma_fiado_pago = qs_fiado_pago.aggregate(total_valor_pago=Sum('valor'))['total_valor_pago'] or Decimal('0.00')
     soma_fiado_aberto = qs_fiado_aberto.aggregate(total_valor_aberto=Sum('valor'))['total_valor_aberto'] or Decimal('0.00')
     soma_total_caixa = qs_caixa.aggregate(total_valor_caixa=Sum('valor'))['total_valor_caixa'] or Decimal('0.00')
@@ -279,7 +280,7 @@ def fiados(request):
             filter_search['datapago'] = datapago
         if is_pago is not None:
             filter_search['is_pago'] = is_pago
-    fiados = models.Fiado.objects.filter(**filter_search).order_by('cliente__nome')
+    fiados = models.Fiado.objects.filter(**filter_search, created__year=2026).order_by('cliente__nome')
 
     fiados_agrupados = (
         fiados.values('cliente__nome')
@@ -519,7 +520,7 @@ def delete_produto(request, produto_id):
 def total_produtos(request):
     cortesia_qs = (
         models.ItemCortesia.objects
-        .filter(produtos=OuterRef('produtos'))
+        .filter(produtos=OuterRef('produtos'), created__year=2026)
         .values('produtos')
         .annotate(
             cortesias_qtd = Sum('quantidade'),
@@ -532,6 +533,7 @@ def total_produtos(request):
     )
     qs = (
         models.ItemCaixa.objects
+        .filter(created__year=2026)
         .values('produtos', produto=F('produtos__nome'))
         .annotate(
             total_qtd = Sum('quantidade'),
@@ -625,8 +627,8 @@ def caixas(request):
             filter_search['cliente'] = cliente
         if data:
             filter_search['data'] = data
-    caixas = models.Caixa.objects.filter(**filter_search).order_by('cliente__nome').all()
-    caixas_fiados = models.Caixa.objects.filter(**filter_search).filter(cliente__nome__icontains='fiado')
+    caixas = models.Caixa.objects.filter(**filter_search, created__year=2026).order_by('cliente__nome').all()
+    caixas_fiados = models.Caixa.objects.filter(**filter_search, created__year=2026).filter(cliente__nome__icontains='fiado')
     caixas_agrupados = (
         caixas.values('cliente__id', 'cliente__nome')
         .annotate(
@@ -803,9 +805,10 @@ def delete_caixa(request, caixa_id):
 
 @login_required
 def cortesia(request):
-    cortesias = models.Cortesia.objects.order_by('-data').all()
+    cortesias = models.Cortesia.objects.filter(created__year=2026).order_by('-data')
     qs = (
         models.ItemCortesia.objects
+        .filter(created__year=2026)
         .values(produto=F('produtos__nome'))
         .annotate(
             total_qtd = Sum('quantidade')
@@ -1056,7 +1059,7 @@ def entradas(request):
             filter_search['categoria'] = categoria
         if data:
             filter_search['data'] = data
-    entradas = models.Entradas.objects.filter(**filter_search).order_by('categoria__nome').all()
+    entradas = models.Entradas.objects.filter(**filter_search, created__year=2026).order_by('categoria__nome')
     entradas_agrupadas = (
         entradas.values('categoria__nome')
         .annotate(total_entrada=Sum('valor'))
@@ -1195,7 +1198,7 @@ def despesas(request):
             filter_search['datapago'] = datapago
         if is_pago:
             filter_search['is_pago'] = is_pago
-    despesas = models.Despesas.objects.filter(**filter_search).order_by('categoria__nome').all()
+    despesas = models.Despesas.objects.filter(**filter_search, created__year=2026).order_by('categoria__nome')
     despesas_agrupadas = (
         despesas.values('categoria__nome')
         .annotate(total_entrada=Sum('valor'))
