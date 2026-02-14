@@ -85,6 +85,7 @@ class ItemCaixa(models.Model):
     caixa = models.ForeignKey(Caixa, on_delete=models.CASCADE, verbose_name='Caixa')
     produtos = models.ForeignKey(Produto, on_delete=models.CASCADE, verbose_name='Produtos')
     quantidade = models.PositiveIntegerField(verbose_name='Quantidade')
+    created = models.DateTimeField(auto_now_add=True, null=True)
     
     class Meta:
         unique_together = ('caixa', 'produtos')
@@ -145,6 +146,7 @@ class ItemCortesia(models.Model):
     cortesia = models.ForeignKey(Cortesia, on_delete=models.CASCADE, verbose_name='Itens')
     produtos = models.ForeignKey(Produto, on_delete=models.CASCADE, verbose_name='Produtos')
     quantidade = models.PositiveIntegerField(verbose_name='Quantidade')
+    created = models.DateTimeField(auto_now_add=True, null=True)
 
     class Meta:
         unique_together = ('cortesia', 'produtos')
