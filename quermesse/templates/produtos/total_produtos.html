@@ -1,15 +1,32 @@
 {% extends "base.html" %}
-{% load django_tables2 %}
+{% load django_tables2 l10n %}
 
 {% block conteudo %}
     <a href="{% url 'produtos' %}" class="btn btn-primary mb-3">
         <span class="fas fa-arrow-left mr-1"></span>
         Voltar
     </a>
-    <a href="{% url 'total_produtos' %}?export=xlsx" class="btn btn-success mb-3">
+    <a href="{% url 'total_produtos' %}?ano={{ selected_year }}&export=xlsx" class="btn btn-success mb-3">
         <span class="fas fa-file-excel mr-1"></span>
         Exportar para XLSX
     </a>
+    <form method="get" class="card mb-4">
+        <div class="card-body">
+            <div class="form-row justify-content-start align-items-end">
+                <div class="form-group col-auto mx-2 mb-3">
+                    <label for="id_ano">Ano</label>
+                    <select id="id_ano" name="ano" class="form-control">
+                        {% for year in years %}
+                            <option value="{{ year|unlocalize }}" {% if year == selected_year %}selected{% endif %}>{{ year|unlocalize }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-auto ml-auto">
+                    <button type="submit" class="btn btn-primary">Filtrar</button>
+                </div>
+            </div>
+        </div>
+    </form>
     <div class="card">
         <div class="card-body">
             <table class="table table-bordered table-hover">

@@ -227,6 +227,12 @@ class DespesasForm(forms.ModelForm):
         self.fields['categoria'].queryset = Categoria.objects.filter(is_despesa=True).order_by('nome').all()
 
 class DespesasFindForm(forms.ModelForm):
+    is_pago = forms.NullBooleanField(
+        required=False,
+        widget=forms.NullBooleanSelect(),
+        label='Pago'
+    )
+
     class Meta:
         model = Despesas
         fields = [
@@ -238,7 +244,6 @@ class DespesasFindForm(forms.ModelForm):
         widgets = {
             'data': forms.widgets.DateInput(attrs={'type': 'date'}),
             'datapago': forms.widgets.DateInput(attrs={'type': 'date'}),
-            'is_pago': forms.widgets.Select()
         }
 
     def __init__(self, *args, **kwargs):

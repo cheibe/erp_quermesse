@@ -79,4 +79,8 @@ urlpatterns = [
     path('despesas/editar/<despesa_id>', views.edit_despesa, name='edit_despesa'),
     path('despesas/delete-modal', views.delete_despesa_modal, name='delete_despesa_modal'),
     path('despesas/delete/<despesa_id>', views.delete_despesa, name='delete_despesa'),
+
+    path('relatorios/entradas-ano-a-ano/', views.relatorio_entradas_ano_a_ano, name='relatorio_entradas_ano_a_ano'),
+    path('relatorios/vendas-produtos-ano-a-ano/', views.relatorio_vendas_produtos_ano_a_ano, name='relatorio_vendas_produtos_ano_a_ano'),
+    path('relatorios/pagamentos-ano-a-ano/', views.relatorio_pagamentos_ano_a_ano, name='relatorio_pagamentos_ano_a_ano'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

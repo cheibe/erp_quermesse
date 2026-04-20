@@ -108,6 +108,35 @@
                 </li>
                 <li class="nav-item has-treeview">
                     <a href="#" class="nav-link">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <p>
+                            Relatórios
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{% url "relatorio_entradas_ano_a_ano" %}" class="nav-link">
+                                <i class="fas fa-angle-right nav-icon"></i>
+                                <p>Entradas avulsas (ano a ano)</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url "relatorio_vendas_produtos_ano_a_ano" %}" class="nav-link">
+                                <i class="fas fa-angle-right nav-icon"></i>
+                                <p>Vendas de produtos (ano a ano)</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url "relatorio_pagamentos_ano_a_ano" %}" class="nav-link">
+                                <i class="fas fa-angle-right nav-icon"></i>
+                                <p>Pagamentos (ano a ano)</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item has-treeview">
+                    <a href="#" class="nav-link">
                         <i class="nav-icon fa fa-cogs"></i>
                         <p>
                             Ferramentas

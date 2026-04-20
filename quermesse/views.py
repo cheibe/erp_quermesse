@@ -3,8 +3,8 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value
-from django.db.models.functions import Coalesce
+from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value, IntegerField
+from django.db.models.functions import Coalesce, ExtractYear
 from django.db import transaction
 from django.utils import timezone
 from django_tables2 import RequestConfig
@@ -51,6 +51,74 @@ ItemCortesiaEditFormSet = inlineformset_factory(
     can_delete=True
 )
 
+
+def _current_year():
+    return timezone.localdate().year
+
+
+def _yearly_totals_to_dict(rows, year_key='ano', total_key='total'):
+    yearly_totals = {}
+    for row in rows:
+        year = row.get(year_key)
+        if year is None:
+            continue
+        yearly_totals[int(year)] = row.get(total_key) or Decimal('0.00')
+    return yearly_totals
+
+
+def _build_yearly_comparison_rows(yearly_totals):
+    if not yearly_totals:
+        return []
+
+    min_year = min(yearly_totals.keys())
+    max_year = max(yearly_totals.keys())
+    rows = []
+
+    for year in range(min_year, max_year + 1):
+        current_total = yearly_totals.get(year, Decimal('0.00'))
+        previous_total = None
+        difference = None
+        variation_percent = None
+
+        if year > min_year:
+            previous_total = yearly_totals.get(year - 1, Decimal('0.00'))
+            difference = current_total - previous_total
+            if previous_total != 0:
+                variation_percent = (difference / previous_total) * Decimal('100')
+
+        rows.append({
+            'ano': year,
+            'total': current_total,
+            'ano_anterior': previous_total,
+            'diferenca': difference,
+            'variacao_percentual': variation_percent,
+        })
+
+    return rows
+
+
+def _build_comparison_context(title, description, yearly_totals):
+    comparison_rows = _build_yearly_comparison_rows(yearly_totals)
+    total_geral = sum(yearly_totals.values(), Decimal('0.00'))
+    ultimo_registro = comparison_rows[-1] if comparison_rows else None
+    melhor_ano = None
+
+    if yearly_totals:
+        year = max(yearly_totals, key=yearly_totals.get)
+        melhor_ano = {
+            'ano': year,
+            'total': yearly_totals[year],
+        }
+
+    return {
+        'title': title,
+        'description': description,
+        'comparison_rows': comparison_rows,
+        'total_geral': total_geral,
+        'ultimo_registro': ultimo_registro,
+        'melhor_ano': melhor_ano,
+    }
+
 def login(request):
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
@@ -75,14 +143,15 @@ def gerador_bingo(request):
 
 @login_required
 def home(request):
+    current_year = _current_year()
     qs_produtos = (
         models.ItemCaixa.objects
-        .filter(created__year=2026)
+        .filter(caixa__data__year=current_year)
         .values(produto=F('produtos__nome'))
         .annotate(
             total_qtd = Sum('quantidade'),
             total_valor = Sum(
-                F('quantidade') * F('produtos__valor'),
+                F('quantidade') * F('valor_unitario'),
                 output_field=DecimalField(decimal_places=2)
             )
         )
@@ -90,15 +159,15 @@ def home(request):
     )
     qs_operador = (
         models.Clientes.objects
-                .filter(is_caixa=True, created__year=2026)
+                .filter(is_caixa=True, caixa__data__year=current_year)
                 .annotate(total_vendas=Sum("caixa__valor"))
                 .order_by("-total_vendas")
     )
-    qs_fiado_pago = models.Fiado.objects.filter(is_pago=True, created__year=2026)
-    qs_fiado_aberto = models.Fiado.objects.filter(is_pago=False, created__year=2026)
-    qs_caixa = models.Caixa.objects.filter(created__year=2026)
-    qs_entrada = models.Entradas.objects.filter(created__year=2026)
-    qs_despesa = models.Despesas.objects.filter(created__year=2026)
+    qs_fiado_pago = models.Fiado.objects.filter(is_pago=True, datadoc__year=current_year)
+    qs_fiado_aberto = models.Fiado.objects.filter(is_pago=False, datadoc__year=current_year)
+    qs_caixa = models.Caixa.objects.filter(data__year=current_year)
+    qs_entrada = models.Entradas.objects.filter(data__year=current_year)
+    qs_despesa = models.Despesas.objects.filter(data__year=current_year)
     soma_fiado_pago = qs_fiado_pago.aggregate(total_valor_pago=Sum('valor'))['total_valor_pago'] or Decimal('0.00')
     soma_fiado_aberto = qs_fiado_aberto.aggregate(total_valor_aberto=Sum('valor'))['total_valor_aberto'] or Decimal('0.00')
     soma_total_caixa = qs_caixa.aggregate(total_valor_caixa=Sum('valor'))['total_valor_caixa'] or Decimal('0.00')
@@ -122,6 +191,92 @@ def home(request):
         'table_produto': table_produto,
         'table_operador': table_operador
     })
+
+
+@login_required
+def relatorio_entradas_ano_a_ano(request):
+    entradas_por_ano = (
+        models.Entradas.objects
+        .annotate(ano=ExtractYear('data'))
+        .values('ano')
+        .annotate(total=Sum('valor'))
+        .order_by('ano')
+    )
+    yearly_totals = _yearly_totals_to_dict(entradas_por_ano)
+    context = _build_comparison_context(
+        title='Relatório de entradas avulsas',
+        description='Comparativo ano a ano do total de entradas avulsas.',
+        yearly_totals=yearly_totals,
+    )
+    return render(request, 'relatorios/comparativo_anual.html', context)
+
+
+@login_required
+def relatorio_vendas_produtos_ano_a_ano(request):
+    vendas_produtos_por_ano = (
+        models.ItemCaixa.objects
+        .annotate(ano=ExtractYear('caixa__data'))
+        .values('ano')
+        .annotate(
+            total=Sum(
+                F('quantidade') * F('valor_unitario'),
+                output_field=DecimalField(max_digits=25, decimal_places=2)
+            )
+        )
+        .order_by('ano')
+    )
+    cortesias_produtos_por_ano = (
+        models.ItemCortesia.objects
+        .annotate(ano=ExtractYear('cortesia__data'))
+        .values('ano')
+        .annotate(
+            total=Sum(
+                F('quantidade') * F('produtos__valor'),
+                output_field=DecimalField(max_digits=25, decimal_places=2)
+            )
+        )
+        .order_by('ano')
+    )
+
+    yearly_sales = _yearly_totals_to_dict(vendas_produtos_por_ano)
+    yearly_cortesias = _yearly_totals_to_dict(cortesias_produtos_por_ano)
+    all_years = sorted(set(yearly_sales.keys()) | set(yearly_cortesias.keys()))
+    yearly_totals = {
+        year: yearly_sales.get(year, Decimal('0.00')) - yearly_cortesias.get(year, Decimal('0.00'))
+        for year in all_years
+    }
+
+    context = _build_comparison_context(
+        title='Relatório de vendas de produtos',
+        description='Comparativo ano a ano do valor líquido de produtos (vendas - cortesias).',
+        yearly_totals=yearly_totals,
+    )
+    return render(request, 'relatorios/comparativo_anual.html', context)
+
+
+@login_required
+def relatorio_pagamentos_ano_a_ano(request):
+    pagamentos_por_ano = (
+        models.Despesas.objects
+        .filter(is_pago=True)
+        .annotate(
+            ano=Coalesce(
+                ExtractYear('datapago'),
+                ExtractYear('data'),
+                output_field=IntegerField(),
+            )
+        )
+        .values('ano')
+        .annotate(total=Sum('valor'))
+        .order_by('ano')
+    )
+    yearly_totals = _yearly_totals_to_dict(pagamentos_por_ano)
+    context = _build_comparison_context(
+        title='Relatório de pagamentos',
+        description='Comparativo ano a ano dos pagamentos realizados.',
+        yearly_totals=yearly_totals,
+    )
+    return render(request, 'relatorios/comparativo_anual.html', context)
 
 @login_required
 def clientes(request):
@@ -252,14 +407,17 @@ def delete_autorizado(request, autorizado_id):
 
 @login_required
 def fiados(request):
+    current_year = _current_year()
     if request.method == 'POST':
         selecionados = request.POST.getlist('select')
         if selecionados:
-            models.Fiado.objects.filter(pk__in=selecionados).update(
+            total_atualizados = models.Fiado.objects.filter(
+                pk__in=selecionados,
+            ).update(
                 is_pago=True,
                 datapago=timezone.now()
             )
-            messages.success(request, f"{len(selecionados)} fiado(s) marcado(s) como pago.")
+            messages.success(request, f"{total_atualizados} fiado(s) marcado(s) como pago.")
         else:
             messages.warning(request, "Nenhum registro selecionado.")
         return redirect('fiados')
@@ -267,6 +425,8 @@ def fiados(request):
     form.fields['cliente'].required = False
     form.fields['datadoc'].required = False
     filter_search = {}
+    datadoc = None
+    datapago = None
     if form.is_valid():
         cliente = form.cleaned_data.get('cliente')
         datadoc = form.cleaned_data.get('datadoc')
@@ -280,7 +440,10 @@ def fiados(request):
             filter_search['datapago'] = datapago
         if is_pago is not None:
             filter_search['is_pago'] = is_pago
-    fiados = models.Fiado.objects.filter(**filter_search, created__year=2026).order_by('cliente__nome')
+    fiados = models.Fiado.objects.filter(**filter_search)
+    if not datadoc and not datapago:
+        fiados = fiados.filter(datadoc__year=current_year)
+    fiados = fiados.order_by('cliente__nome')
 
     fiados_agrupados = (
         fiados.values('cliente__nome')
@@ -518,9 +681,32 @@ def delete_produto(request, produto_id):
 
 @login_required
 def total_produtos(request):
+    current_year = _current_year()
+    years_queryset = (
+        models.ItemCaixa.objects
+        .annotate(ano=ExtractYear('caixa__data'))
+        .values_list('ano', flat=True)
+        .distinct()
+        .order_by('-ano')
+    )
+    years = [year for year in years_queryset if year is not None]
+    has_year_filter = bool(request.GET.get('ano'))
+    selected_year = current_year
+    if has_year_filter:
+        selected_year_param = request.GET.get('ano')
+        try:
+            selected_year = int(str(selected_year_param).replace('.', ''))
+        except (TypeError, ValueError):
+            selected_year = current_year
+
+    if selected_year not in years:
+        years.insert(0, selected_year)
+    elif current_year not in years:
+        years.insert(0, current_year)
+
     cortesia_qs = (
         models.ItemCortesia.objects
-        .filter(produtos=OuterRef('produtos'), created__year=2026)
+        .filter(produtos=OuterRef('produtos'), cortesia__data__year=selected_year)
         .values('produtos')
         .annotate(
             cortesias_qtd = Sum('quantidade'),
@@ -533,12 +719,12 @@ def total_produtos(request):
     )
     qs = (
         models.ItemCaixa.objects
-        .filter(created__year=2026)
+        .filter(caixa__data__year=selected_year)
         .values('produtos', produto=F('produtos__nome'))
         .annotate(
             total_qtd = Sum('quantidade'),
             total_valor = Sum(
-                F('quantidade') * F('produtos__valor'),
+                F('quantidade') * F('valor_unitario'),
                 output_field=DecimalField(decimal_places=2)
             ),
             cortesias_qtd = Coalesce(Subquery(cortesia_qs.values('cortesias_qtd')), Value(0)),
@@ -611,15 +797,19 @@ def total_produtos(request):
     RequestConfig(request, paginate={"per_page": 25}).configure(table)
     return render(request, 'produtos/total_produtos.html', {
         'title': 'Vendas de produtos',
-        'table': table
+        'table': table,
+        'years': years,
+        'selected_year': selected_year,
     })
 
 @login_required
 def caixas(request):
+    current_year = _current_year()
     form = forms.CaixaFindForm(request.GET)
     form.fields['cliente'].required = False
     form.fields['data'].required = False
     filter_search = {}
+    data = None
     if form.is_valid():
         cliente = form.cleaned_data.get('cliente')
         data = form.cleaned_data.get('data')
@@ -627,8 +817,11 @@ def caixas(request):
             filter_search['cliente'] = cliente
         if data:
             filter_search['data'] = data
-    caixas = models.Caixa.objects.filter(**filter_search, created__year=2026).order_by('cliente__nome').all()
-    caixas_fiados = models.Caixa.objects.filter(**filter_search, created__year=2026).filter(cliente__nome__icontains='fiado')
+    caixas = models.Caixa.objects.filter(**filter_search)
+    if not data:
+        caixas = caixas.filter(data__year=current_year)
+    caixas = caixas.order_by('cliente__nome').all()
+    caixas_fiados = caixas.filter(cliente__nome__icontains='fiado')
     caixas_agrupados = (
         caixas.values('cliente__id', 'cliente__nome')
         .annotate(
@@ -805,10 +998,11 @@ def delete_caixa(request, caixa_id):
 
 @login_required
 def cortesia(request):
-    cortesias = models.Cortesia.objects.filter(created__year=2026).order_by('-data')
+    current_year = _current_year()
+    cortesias = models.Cortesia.objects.filter(data__year=current_year).order_by('-data').all()
     qs = (
         models.ItemCortesia.objects
-        .filter(created__year=2026)
+        .filter(cortesia__data__year=current_year)
         .values(produto=F('produtos__nome'))
         .annotate(
             total_qtd = Sum('quantidade')
@@ -1048,10 +1242,12 @@ def delete_categoria_despesa(request, categoria_despesa_id):
 
 @login_required
 def entradas(request):
+    current_year = _current_year()
     form = forms.EntradasFindForm(request.GET)
     form.fields['categoria'].required = False
     form.fields['data'].required = False
     filter_search = {}
+    data = None
     if form.is_valid():
         categoria = form.cleaned_data.get('categoria')
         data = form.cleaned_data.get('data')
@@ -1059,7 +1255,10 @@ def entradas(request):
             filter_search['categoria'] = categoria
         if data:
             filter_search['data'] = data
-    entradas = models.Entradas.objects.filter(**filter_search, created__year=2026).order_by('categoria__nome')
+    entradas = models.Entradas.objects.filter(**filter_search)
+    if not data:
+        entradas = entradas.filter(data__year=current_year)
+    entradas = entradas.order_by('categoria__nome').all()
     entradas_agrupadas = (
         entradas.values('categoria__nome')
         .annotate(total_entrada=Sum('valor'))
@@ -1181,10 +1380,13 @@ def delete_entrada(request, entrada_id):
 
 @login_required
 def despesas(request):
+    current_year = _current_year()
     form = forms.DespesasFindForm(request.GET)
     form.fields['categoria'].required = False
     form.fields['data'].required = False
     filter_search = {}
+    data = None
+    datapago = None
     if form.is_valid():
         categoria = form.cleaned_data.get('categoria')
         data = form.cleaned_data.get('data')
@@ -1196,9 +1398,12 @@ def despesas(request):
             filter_search['data'] = data
         if datapago:
             filter_search['datapago'] = datapago
-        if is_pago:
+        if is_pago is not None:
             filter_search['is_pago'] = is_pago
-    despesas = models.Despesas.objects.filter(**filter_search, created__year=2026).order_by('categoria__nome')
+    despesas = models.Despesas.objects.filter(**filter_search)
+    if not data and not datapago:
+        despesas = despesas.filter(data__year=current_year)
+    despesas = despesas.order_by('categoria__nome').all()
     despesas_agrupadas = (
         despesas.values('categoria__nome')
         .annotate(total_entrada=Sum('valor'))

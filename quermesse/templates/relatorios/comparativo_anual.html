@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load l10n humanize %}
+
+{% block conteudo %}
+<div class="mb-3">
+    <a href="{% url 'relatorio_entradas_ano_a_ano' %}" class="btn btn-outline-primary btn-sm mb-2">Entradas avulsas</a>
+    <a href="{% url 'relatorio_vendas_produtos_ano_a_ano' %}" class="btn btn-outline-primary btn-sm mb-2">Vendas de produtos</a>
+    <a href="{% url 'relatorio_pagamentos_ano_a_ano' %}" class="btn btn-outline-primary btn-sm mb-2">Pagamentos</a>
+</div>
+
+<p class="text-muted">{{ description }}</p>
+
+<div class="row">
+    <div class="col-12 col-sm-6 col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Total acumulado</h3>
+            </div>
+            <div class="card-body">
+                <h4 class="mb-0">R$ {{ total_geral|floatformat:2|intcomma }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Último ano</h3>
+            </div>
+            <div class="card-body">
+                {% if ultimo_registro %}
+                    <h5 class="mb-1">{{ ultimo_registro.ano }}</h5>
+                    <h4 class="mb-0">R$ {{ ultimo_registro.total|floatformat:2|intcomma }}</h4>
+                {% else %}
+                    <h5 class="mb-0">Sem dados</h5>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Melhor ano</h3>
+            </div>
+            <div class="card-body">
+                {% if melhor_ano %}
+                    <h5 class="mb-1">{{ melhor_ano.ano }}</h5>
+                    <h4 class="mb-0">R$ {{ melhor_ano.total|floatformat:2|intcomma }}</h4>
+                {% else %}
+                    <h5 class="mb-0">Sem dados</h5>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Comparativo anual</h3>
+    </div>
+    <div class="card-body table-responsive p-0">
+        {% if comparison_rows %}
+        <table class="table table-bordered table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Ano</th>
+                    <th>Total</th>
+                    <th>Ano anterior</th>
+                    <th>Diferença</th>
+                    <th>Variação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in comparison_rows %}
+                    <tr>
+                        <td>{{ row.ano }}</td>
+                        <td>R$ {{ row.total|floatformat:2|intcomma }}</td>
+                        <td>
+                            {% if row.ano_anterior is not None %}
+                                R$ {{ row.ano_anterior|floatformat:2|intcomma }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.diferenca is not None %}
+                                <span class="{% if row.diferenca >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    R$ {{ row.diferenca|floatformat:2|intcomma }}
+                                </span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if row.variacao_percentual is not None %}
+                                <span class="{% if row.variacao_percentual >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ row.variacao_percentual|floatformat:2 }}%
+                                </span>
+                            {% elif row.ano_anterior is not None %}
+                                N/A
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <div class="p-3">
+                Nenhum dado encontrado para montar o comparativo anual.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock conteudo %}

@@ -85,13 +85,24 @@ class ItemCaixa(models.Model):
     caixa = models.ForeignKey(Caixa, on_delete=models.CASCADE, verbose_name='Caixa')
     produtos = models.ForeignKey(Produto, on_delete=models.CASCADE, verbose_name='Produtos')
     quantidade = models.PositiveIntegerField(verbose_name='Quantidade')
-    created = models.DateTimeField(auto_now_add=True, null=True)
+    valor_unitario = models.DecimalField(verbose_name='Valor unitário', decimal_places=2, max_digits=20, default=0.00)
     
     class Meta:
         unique_together = ('caixa', 'produtos')
 
     def __str__(self):
         return self.produtos.nome
+
+    def save(self, *args, **kwargs):
+        if self.produtos_id:
+            should_update_price = self.pk is None
+            if self.pk is not None:
+                original = type(self).objects.filter(pk=self.pk).values('produtos_id').first()
+                if original and original['produtos_id'] != self.produtos_id:
+                    should_update_price = True
+            if should_update_price or self.valor_unitario == 0:
+                self.valor_unitario = self.produtos.valor
+        super().save(*args, **kwargs)
     
 class Categoria(models.Model):
     nome = models.CharField(verbose_name='Nome', max_length=100)
