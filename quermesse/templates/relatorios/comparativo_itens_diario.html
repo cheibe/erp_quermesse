@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load l10n humanize %}
+
+{% block conteudo %}
+<div class="mb-3">
+    <a href="{% url 'relatorio_entradas_ano_a_ano' %}" class="btn btn-outline-primary btn-sm mb-2">Entradas avulsas</a>
+    <a href="{% url 'relatorio_vendas_produtos_ano_a_ano' %}" class="btn btn-outline-primary btn-sm mb-2">Vendas de produtos</a>
+    <a href="{% url 'relatorio_pagamentos_ano_a_ano' %}" class="btn btn-outline-primary btn-sm mb-2">Pagamentos</a>
+    <a href="{% url 'relatorio_quantidade_itens_vendidos_dia_a_dia' %}" class="btn btn-outline-primary btn-sm mb-2">Qtd. itens vendidos por dia</a>
+    <a href="{% url 'relatorio_valor_vendido_dia_a_dia' %}" class="btn btn-outline-primary btn-sm mb-2">Valor vendido por dia</a>
+</div>
+
+<p class="text-muted">{{ description }}</p>
+
+<div class="row">
+    <div class="col-12 col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Total acumulado</h3>
+            </div>
+            <div class="card-body">
+                <h4 class="mb-0">{{ total_geral|intcomma }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Total por ano</h3>
+            </div>
+            <div class="card-body table-responsive p-0">
+                {% if totals %}
+                <table class="table table-bordered table-hover mb-0">
+                    <thead>
+                        <tr>
+                            {% for total in totals %}
+                                <th>{{ total.year }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            {% for total in totals %}
+                                <td>{{ total.value|intcomma }}</td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                {% else %}
+                    <div class="p-3">Sem dados</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Itens vendidos por dia</h3>
+    </div>
+    <div class="card-body table-responsive p-0">
+        {% if rows %}
+        <table class="table table-bordered table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Dia</th>
+                    {% for year in years %}
+                        <th>Quantidade {{ year }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% regroup rows by dia as rows_by_day %}
+                {% for day in rows_by_day %}
+                    <tr class="table-secondary">
+                        <th colspan="{{ years|length|add:2 }}">{{ day.grouper }}</th>
+                    </tr>
+                    {% for row in day.list %}
+                        <tr>
+                            <td>{{ row.produto }}</td>
+                            <td>{{ row.dia }}</td>
+                            {% for cell in row.cells %}
+                                <td>{{ cell.value|intcomma }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <div class="p-3">
+                Nenhum dado encontrado para montar o comparativo de itens vendidos.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock conteudo %}

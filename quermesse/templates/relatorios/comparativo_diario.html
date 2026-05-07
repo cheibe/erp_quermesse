@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load l10n humanize %}
+
+{% block conteudo %}
+<div class="mb-3">
+    <a href="{% url 'relatorio_entradas_ano_a_ano' %}" class="btn btn-outline-primary btn-sm mb-2">Entradas avulsas</a>
+    <a href="{% url 'relatorio_vendas_produtos_ano_a_ano' %}" class="btn btn-outline-primary btn-sm mb-2">Vendas de produtos</a>
+    <a href="{% url 'relatorio_pagamentos_ano_a_ano' %}" class="btn btn-outline-primary btn-sm mb-2">Pagamentos</a>
+    <a href="{% url 'relatorio_quantidade_itens_vendidos_dia_a_dia' %}" class="btn btn-outline-primary btn-sm mb-2">Qtd. itens vendidos por dia</a>
+    <a href="{% url 'relatorio_valor_vendido_dia_a_dia' %}" class="btn btn-outline-primary btn-sm mb-2">Valor vendido por dia</a>
+</div>
+
+<p class="text-muted">{{ description }}</p>
+
+<div class="row">
+    <div class="col-12 col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Total acumulado</h3>
+            </div>
+            <div class="card-body">
+                {% if is_currency %}
+                    <h4 class="mb-0">R$ {{ total_geral|floatformat:2|intcomma }}</h4>
+                {% else %}
+                    <h4 class="mb-0">{{ total_geral|intcomma }}</h4>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Total por ano</h3>
+            </div>
+            <div class="card-body table-responsive p-0">
+                {% if totals %}
+                <table class="table table-bordered table-hover mb-0">
+                    <thead>
+                        <tr>
+                            {% for total in totals %}
+                                <th>{{ total.year }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            {% for total in totals %}
+                                <td>
+                                    {% if is_currency %}
+                                        R$ {{ total.value|floatformat:2|intcomma }}
+                                    {% else %}
+                                        {{ total.value|intcomma }}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    </tbody>
+                </table>
+                {% else %}
+                    <div class="p-3">Sem dados</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Comparativo diário entre anos</h3>
+    </div>
+    <div class="card-body table-responsive p-0">
+        {% if rows %}
+        <table class="table table-bordered table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Dia</th>
+                    {% for year in years %}
+                        <th>{{ year }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td>{{ row.dia }}</td>
+                        {% for cell in row.cells %}
+                            <td>
+                                {% if is_currency %}
+                                    R$ {{ cell.value|floatformat:2|intcomma }}
+                                {% else %}
+                                    {{ cell.value|intcomma }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <div class="p-3">
+                Nenhum dado encontrado para montar o comparativo diário.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock conteudo %}

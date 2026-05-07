@@ -83,4 +83,6 @@ urlpatterns = [
     path('relatorios/entradas-ano-a-ano/', views.relatorio_entradas_ano_a_ano, name='relatorio_entradas_ano_a_ano'),
     path('relatorios/vendas-produtos-ano-a-ano/', views.relatorio_vendas_produtos_ano_a_ano, name='relatorio_vendas_produtos_ano_a_ano'),
     path('relatorios/pagamentos-ano-a-ano/', views.relatorio_pagamentos_ano_a_ano, name='relatorio_pagamentos_ano_a_ano'),
+    path('relatorios/quantidade-itens-vendidos-dia-a-dia/', views.relatorio_quantidade_itens_vendidos_dia_a_dia, name='relatorio_quantidade_itens_vendidos_dia_a_dia'),
+    path('relatorios/valor-vendido-dia-a-dia/', views.relatorio_valor_vendido_dia_a_dia, name='relatorio_valor_vendido_dia_a_dia'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

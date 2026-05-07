@@ -3,8 +3,8 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value, IntegerField
-from django.db.models.functions import Coalesce, ExtractYear
+from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value, IntegerField, Q
+from django.db.models.functions import Coalesce, ExtractDay, ExtractMonth, ExtractYear
 from django.db import transaction
 from django.utils import timezone
 from django_tables2 import RequestConfig
@@ -66,6 +66,17 @@ def _yearly_totals_to_dict(rows, year_key='ano', total_key='total'):
     return yearly_totals
 
 
+def _paid_fiados_for_year(year):
+    return models.Fiado.objects.filter(is_pago=True).filter(
+        Q(datapago__year=year) |
+        Q(datapago__isnull=True, datadoc__year=year)
+    )
+
+
+def _paid_fiados_total_for_year(year):
+    return _paid_fiados_for_year(year).aggregate(total=Sum('valor'))['total'] or Decimal('0.00')
+
+
 def _build_yearly_comparison_rows(yearly_totals):
     if not yearly_totals:
         return []
@@ -119,6 +130,78 @@ def _build_comparison_context(title, description, yearly_totals):
         'melhor_ano': melhor_ano,
     }
 
+
+def _build_daily_comparison_context(title, description, daily_totals, is_currency):
+    years = sorted({int(year) for year, _, _ in daily_totals.keys()})
+    days = sorted({(month, day) for _, month, day in daily_totals.keys()})
+    total_by_year = {
+        year: sum(
+            daily_totals.get((year, month, day), Decimal('0.00') if is_currency else 0)
+            for month, day in days
+        )
+        for year in years
+    }
+    rows = []
+
+    for month, day in days:
+        cells = []
+        for year in years:
+            empty_value = Decimal('0.00') if is_currency else 0
+            cells.append({
+                'year': year,
+                'value': daily_totals.get((year, month, day), empty_value),
+            })
+
+        rows.append({
+            'dia': f'{day:02d}/{month:02d}',
+            'cells': cells,
+        })
+
+    return {
+        'title': title,
+        'description': description,
+        'years': years,
+        'rows': rows,
+        'totals': [{'year': year, 'value': total_by_year[year]} for year in years],
+        'is_currency': is_currency,
+        'total_geral': sum(total_by_year.values(), Decimal('0.00') if is_currency else 0),
+    }
+
+
+def _build_daily_item_quantity_context(title, description, daily_totals):
+    years = sorted({int(year) for year, _, _, _ in daily_totals.keys()})
+    item_days = sorted({(month, day, produto) for _, produto, month, day in daily_totals.keys()})
+    total_by_year = {
+        year: sum(
+            daily_totals.get((year, produto, month, day), 0)
+            for month, day, produto in item_days
+        )
+        for year in years
+    }
+    rows = []
+
+    for month, day, produto in item_days:
+        rows.append({
+            'produto': produto,
+            'dia': f'{day:02d}/{month:02d}',
+            'cells': [
+                {
+                    'year': year,
+                    'value': daily_totals.get((year, produto, month, day), 0),
+                }
+                for year in years
+            ],
+        })
+
+    return {
+        'title': title,
+        'description': description,
+        'years': years,
+        'rows': rows,
+        'totals': [{'year': year, 'value': total_by_year[year]} for year in years],
+        'total_geral': sum(total_by_year.values(), 0),
+    }
+
 def login(request):
     if request.method == 'POST':
         form = AuthenticationForm(data=request.POST)
@@ -163,17 +246,18 @@ def home(request):
                 .annotate(total_vendas=Sum("caixa__valor"))
                 .order_by("-total_vendas")
     )
-    qs_fiado_pago = models.Fiado.objects.filter(is_pago=True, datadoc__year=current_year)
+    qs_fiado_pago = _paid_fiados_for_year(current_year)
     qs_fiado_aberto = models.Fiado.objects.filter(is_pago=False, datadoc__year=current_year)
     qs_caixa = models.Caixa.objects.filter(data__year=current_year)
+    qs_caixa_vendido = qs_caixa.exclude(cliente__nome__icontains='fiado')
     qs_entrada = models.Entradas.objects.filter(data__year=current_year)
     qs_despesa = models.Despesas.objects.filter(data__year=current_year)
     soma_fiado_pago = qs_fiado_pago.aggregate(total_valor_pago=Sum('valor'))['total_valor_pago'] or Decimal('0.00')
     soma_fiado_aberto = qs_fiado_aberto.aggregate(total_valor_aberto=Sum('valor'))['total_valor_aberto'] or Decimal('0.00')
-    soma_total_caixa = qs_caixa.aggregate(total_valor_caixa=Sum('valor'))['total_valor_caixa'] or Decimal('0.00')
+    soma_total_caixa = qs_caixa_vendido.aggregate(total_valor_caixa=Sum('valor'))['total_valor_caixa'] or Decimal('0.00')
     soma_total_entrada = qs_entrada.aggregate(total_valor_entrada=Sum('valor'))['total_valor_entrada'] or Decimal('0.00')
     soma_total_despesa = qs_despesa.aggregate(total_valor_despesa=Sum('valor'))['total_valor_despesa'] or Decimal('0.00')
-    soma_total_bruto = soma_total_caixa + soma_total_entrada
+    soma_total_bruto = soma_total_caixa + soma_total_entrada + soma_fiado_pago
     soma_total_liquido = soma_total_bruto - soma_total_despesa
     soma_total_fiado = soma_fiado_aberto + soma_fiado_pago
     table_produto = tables.QtdProdutosTable(qs_produtos)
@@ -277,6 +361,98 @@ def relatorio_pagamentos_ano_a_ano(request):
         yearly_totals=yearly_totals,
     )
     return render(request, 'relatorios/comparativo_anual.html', context)
+
+
+@login_required
+def relatorio_quantidade_itens_vendidos_dia_a_dia(request):
+    quantidade_por_dia = (
+        models.ItemCaixa.objects
+        .annotate(
+            ano=ExtractYear('caixa__data'),
+            mes=ExtractMonth('caixa__data'),
+            dia=ExtractDay('caixa__data'),
+        )
+        .values('ano', 'produtos__nome', 'mes', 'dia')
+        .annotate(total=Coalesce(Sum('quantidade'), 0))
+        .order_by('mes', 'dia', 'produtos__nome', 'ano')
+    )
+    daily_totals = {
+        (int(row['ano']), row['produtos__nome'], int(row['mes']), int(row['dia'])): row['total'] or 0
+        for row in quantidade_por_dia
+        if row['ano'] and row['produtos__nome'] and row['mes'] and row['dia']
+    }
+    context = _build_daily_item_quantity_context(
+        title='Relatório de quantidade de itens vendidos por dia',
+        description='Comparativo por item e dia da quantidade vendida entre os anos.',
+        daily_totals=daily_totals,
+    )
+    return render(request, 'relatorios/comparativo_itens_diario.html', context)
+
+
+@login_required
+def relatorio_valor_vendido_dia_a_dia(request):
+    valor_por_dia = (
+        models.ItemCaixa.objects
+        .exclude(caixa__cliente__nome__icontains='fiado')
+        .annotate(
+            ano=ExtractYear('caixa__data'),
+            mes=ExtractMonth('caixa__data'),
+            dia=ExtractDay('caixa__data'),
+        )
+        .values('ano', 'mes', 'dia')
+        .annotate(
+            total=Coalesce(
+                Sum(
+                    F('quantidade') * F('valor_unitario'),
+                    output_field=DecimalField(max_digits=25, decimal_places=2),
+                ),
+                Decimal('0.00'),
+                output_field=DecimalField(max_digits=25, decimal_places=2),
+            )
+        )
+        .order_by('mes', 'dia', 'ano')
+    )
+    fiados_pagos_por_dia = (
+        models.Fiado.objects
+        .filter(is_pago=True)
+        .annotate(
+            ano=Coalesce(
+                ExtractYear('datapago'),
+                ExtractYear('datadoc'),
+                output_field=IntegerField(),
+            ),
+            mes=Coalesce(
+                ExtractMonth('datapago'),
+                ExtractMonth('datadoc'),
+                output_field=IntegerField(),
+            ),
+            dia=Coalesce(
+                ExtractDay('datapago'),
+                ExtractDay('datadoc'),
+                output_field=IntegerField(),
+            ),
+        )
+        .values('ano', 'mes', 'dia')
+        .annotate(total=Sum('valor'))
+        .order_by('mes', 'dia', 'ano')
+    )
+    daily_totals = {
+        (int(row['ano']), int(row['mes']), int(row['dia'])): row['total'] or Decimal('0.00')
+        for row in valor_por_dia
+        if row['ano'] and row['mes'] and row['dia']
+    }
+    for row in fiados_pagos_por_dia:
+        if row['ano'] and row['mes'] and row['dia']:
+            key = (int(row['ano']), int(row['mes']), int(row['dia']))
+            daily_totals[key] = daily_totals.get(key, Decimal('0.00')) + (row['total'] or Decimal('0.00'))
+
+    context = _build_daily_comparison_context(
+        title='Relatório de valor vendido por dia',
+        description='Comparativo dia a dia do valor vendido entre os anos, incluindo fiados pagos na data de pagamento.',
+        daily_totals=daily_totals,
+        is_currency=True,
+    )
+    return render(request, 'relatorios/comparativo_diario.html', context)
 
 @login_required
 def clientes(request):
@@ -415,7 +591,7 @@ def fiados(request):
                 pk__in=selecionados,
             ).update(
                 is_pago=True,
-                datapago=timezone.now()
+                datapago=timezone.localdate()
             )
             messages.success(request, f"{total_atualizados} fiado(s) marcado(s) como pago.")
         else:
@@ -524,6 +700,10 @@ def edit_fiado(request, fiado_id):
         if form.is_valid():
             fiado = form.save(commit=False)
             fiado.assign_user = form.cleaned_data.get('assign_user', request.user)
+            if fiado.is_pago and not fiado.datapago:
+                fiado.datapago = timezone.localdate()
+            elif not fiado.is_pago:
+                fiado.datapago = None
             fiado.save()
             messages.success(request, f'O fiado do cliente {fiado.cliente} foi editado com sucesso!')
             return redirect('fiados')
